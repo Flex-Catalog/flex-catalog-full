@@ -1,0 +1,31 @@
+export const PERMISSIONS = {
+  PRODUCT_READ: 'PRODUCT_READ',
+  PRODUCT_WRITE: 'PRODUCT_WRITE',
+  INVOICE_READ: 'INVOICE_READ',
+  INVOICE_ISSUE: 'INVOICE_ISSUE',
+  USER_MANAGE: 'USER_MANAGE',
+  TENANT_MANAGE: 'TENANT_MANAGE',
+} as const;
+
+export type Permission = keyof typeof PERMISSIONS;
+
+export const ROLES = {
+  TENANT_ADMIN: 'TENANT_ADMIN',
+  OPERATOR: 'OPERATOR',
+  READER: 'READER',
+} as const;
+
+export type Role = keyof typeof ROLES;
+
+export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
+  TENANT_ADMIN: [
+    'PRODUCT_READ',
+    'PRODUCT_WRITE',
+    'INVOICE_READ',
+    'INVOICE_ISSUE',
+    'USER_MANAGE',
+    'TENANT_MANAGE',
+  ],
+  OPERATOR: ['PRODUCT_READ', 'PRODUCT_WRITE', 'INVOICE_READ', 'INVOICE_ISSUE'],
+  READER: ['PRODUCT_READ', 'INVOICE_READ'],
+};

@@ -1,0 +1,53 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../prisma/prisma.service';
+import { TokenPayload, AuthUser, ROLE_PERMISSIONS, Role, Permission, Feature } from '@product-catalog/shared';
+
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: configService.get<string>('JWT_SECRET'),
+    });
+  }
+
+  async validate(payload: TokenPayload): Promise<AuthUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: { tenant: true },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+
+    const permissions = this.getPermissionsFromRoles(user.roles as Role[]);
+
+    return {
+      id: user.id,
+      tenantId: user.tenantId,
+      email: user.email,
+      name: user.name,
+      roles: user.roles as Role[],
+      permissions,
+      tenantStatus: user.tenant.status as any,
+      tenantFeatures: user.tenant.features as Feature[],
+    };
+  }
+
+  private getPermissionsFromRoles(roles: Role[]): Permission[] {
+    const permissions = new Set<Permission>();
+    for (const role of roles) {
+      const rolePerms = ROLE_PERMISSIONS[role] || [];
+      rolePerms.forEach((p) => permissions.add(p));
+    }
+    return Array.from(permissions);
+  }
+}

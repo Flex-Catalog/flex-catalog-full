@@ -1,0 +1,23 @@
+{
+  "name": "product-catalog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SaaS Product Catalog with dynamic attributes, multi-tenant, Stripe billing",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:api": "pnpm --filter @product-catalog/api dev",
+    "dev:web": "pnpm --filter @product-catalog/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:cov": "pnpm -r test:cov",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @product-catalog/api prisma:generate",
+    "db:push": "pnpm --filter @product-catalog/api prisma:push",
+    "clean": "pnpm -r exec rm -rf node_modules dist .next .turbo"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
