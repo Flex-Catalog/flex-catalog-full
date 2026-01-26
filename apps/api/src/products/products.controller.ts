@@ -133,7 +133,7 @@ export class ProductsController {
   @RequirePermissions('PRODUCT_WRITE')
   @ApiOperation({ summary: 'Create new product' })
   async create(@CurrentUser() user: AuthUser, @Body() dto: CreateProductDto) {
-    return this.productsService.create(user.tenantId, dto);
+    return this.productsService.create(user.tenantId, user.id, dto);
   }
 
   @Patch(':id')
@@ -144,14 +144,14 @@ export class ProductsController {
     @Param('id') id: string,
     @Body() dto: UpdateProductDto,
   ) {
-    return this.productsService.update(id, user.tenantId, dto);
+    return this.productsService.update(id, user.tenantId, user.id, dto);
   }
 
   @Delete(':id')
   @RequirePermissions('PRODUCT_WRITE')
   @ApiOperation({ summary: 'Delete product' })
   async delete(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.productsService.delete(id, user.tenantId);
+    return this.productsService.delete(id, user.tenantId, user.id);
   }
 
   @Patch(':id/images')

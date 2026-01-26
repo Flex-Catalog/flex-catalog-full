@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { CreateProductInput, UpdateProductInput, ProductAttributes } from '@product-catalog/shared';
 import { z } from 'zod';
 
@@ -15,9 +16,12 @@ const attributesSchema = z.record(
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
-  async create(tenantId: string, input: CreateProductInput) {
+  async create(tenantId: string, userId: string, input: CreateProductInput) {
     // Validate attributes
     if (input.attributes) {
       try {
@@ -41,7 +45,7 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.create({
+    const product = await this.prisma.product.create({
       data: {
         tenantId,
         name: input.name,
@@ -53,8 +57,23 @@ export class ProductsService {
         fiscal: input.fiscal || null,
         images: [],
         isActive: true,
+        createdById: userId,
+        updatedById: userId,
       },
     });
+
+    // Registra no audit log
+    await this.auditService.log({
+      tenantId,
+      userId,
+      action: 'CREATE',
+      entity: 'Product',
+      entityId: product.id,
+      entityName: product.name,
+      newData: product as any,
+    });
+
+    return product;
   }
 
   async findAll(
@@ -122,7 +141,7 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, tenantId: string, input: UpdateProductInput) {
+  async update(id: string, tenantId: string, userId: string, input: UpdateProductInput) {
     const product = await this.prisma.product.findFirst({
       where: { id, tenantId },
     });
@@ -155,7 +174,7 @@ export class ProductsService {
       }
     }
 
-    return this.prisma.product.update({
+    const updatedProduct = await this.prisma.product.update({
       where: { id },
       data: {
         ...(input.name && { name: input.name }),
@@ -166,6 +185,7 @@ export class ProductsService {
         ...(input.attributes && { attributes: input.attributes as ProductAttributes }),
         ...(input.fiscal !== undefined && { fiscal: input.fiscal }),
         ...(input.isActive !== undefined && { isActive: input.isActive }),
+        updatedById: userId,
       },
       include: {
         category: {
@@ -176,9 +196,23 @@ export class ProductsService {
         },
       },
     });
+
+    // Registra no audit log
+    await this.auditService.log({
+      tenantId,
+      userId,
+      action: 'UPDATE',
+      entity: 'Product',
+      entityId: id,
+      entityName: updatedProduct.name,
+      oldData: product as any,
+      newData: updatedProduct as any,
+    });
+
+    return updatedProduct;
   }
 
-  async delete(id: string, tenantId: string) {
+  async delete(id: string, tenantId: string, userId: string) {
     const product = await this.prisma.product.findFirst({
       where: { id, tenantId },
     });
@@ -188,6 +222,18 @@ export class ProductsService {
     }
 
     await this.prisma.product.delete({ where: { id } });
+
+    // Registra no audit log
+    await this.auditService.log({
+      tenantId,
+      userId,
+      action: 'DELETE',
+      entity: 'Product',
+      entityId: id,
+      entityName: product.name,
+      oldData: product as any,
+    });
+
     return { success: true };
   }
 

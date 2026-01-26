@@ -12,6 +12,7 @@ import { InvoicesModule } from './invoices/invoices.module';
 import { BillingModule } from './billing/billing.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ReportsModule } from './reports/reports.module';
+import { AuditModule } from './audit/audit.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantStatusGuard } from './common/guards/tenant-status.guard';
@@ -34,6 +35,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     BillingModule,
     UploadsModule,
     ReportsModule,
+    AuditModule,
   ],
   providers: [
     {

@@ -14,7 +14,10 @@
     "previous": "Anterior",
     "search": "Buscar",
     "filter": "Filtrar",
-    "actions": "Acciones"
+    "actions": "Acciones",
+    "all": "Todos",
+    "page": "Página",
+    "of": "de"
   },
   "validation": {
     "required": "Campo obligatorio",
@@ -144,6 +147,24 @@
     "invoices": "Facturas",
     "reports": "Informes",
     "users": "Usuarios",
-    "billing": "Suscripción"
+    "billing": "Suscripción",
+    "audit": "Registro de Auditoría"
+  },
+  "audit": {
+    "title": "Registro de Auditoría",
+    "totalActions": "Total de Acciones",
+    "last30Days": "Últimos 30 días",
+    "byAction": "Por Acción",
+    "byEntity": "Por Entidad",
+    "topUsers": "Usuarios Más Activos",
+    "filterAction": "Acción",
+    "filterEntity": "Entidad",
+    "noLogs": "No se encontraron registros de actividad",
+    "by": "por",
+    "viewDetails": "Ver detalles",
+    "viewDeleted": "Ver datos eliminados",
+    "viewChanges": "Ver cambios",
+    "before": "Antes",
+    "after": "Después"
   }
 }

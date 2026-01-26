@@ -14,7 +14,10 @@
     "previous": "Anterior",
     "search": "Buscar",
     "filter": "Filtrar",
-    "actions": "Ações"
+    "actions": "Ações",
+    "all": "Todos",
+    "page": "Página",
+    "of": "de"
   },
   "validation": {
     "required": "Campo obrigatório",
@@ -144,6 +147,24 @@
     "invoices": "Notas Fiscais",
     "reports": "Relatórios",
     "users": "Usuários",
-    "billing": "Assinatura"
+    "billing": "Assinatura",
+    "audit": "Log de Auditoria"
+  },
+  "audit": {
+    "title": "Log de Auditoria",
+    "totalActions": "Total de Ações",
+    "last30Days": "Últimos 30 dias",
+    "byAction": "Por Ação",
+    "byEntity": "Por Entidade",
+    "topUsers": "Usuários Mais Ativos",
+    "filterAction": "Ação",
+    "filterEntity": "Entidade",
+    "noLogs": "Nenhum registro de atividade encontrado",
+    "by": "por",
+    "viewDetails": "Ver detalhes",
+    "viewDeleted": "Ver dados excluídos",
+    "viewChanges": "Ver alterações",
+    "before": "Antes",
+    "after": "Depois"
   }
 }

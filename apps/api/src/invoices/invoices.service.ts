@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { InvoiceProvider } from './invoice-provider.interface';
 import { BrazilProvider } from './providers/brazil.provider';
 import { USProvider } from './providers/us.provider';
@@ -12,6 +13,7 @@ export class InvoicesService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
     private readonly brazilProvider: BrazilProvider,
     private readonly usProvider: USProvider,
     private readonly portugalProvider: PortugalProvider,
@@ -27,15 +29,33 @@ export class InvoicesService {
     return provider;
   }
 
-  async create(tenantId: string, input: CreateInvoiceInput) {
-    return this.prisma.invoice.create({
+  async create(tenantId: string, userId: string, input: CreateInvoiceInput) {
+    const invoice = await this.prisma.invoice.create({
       data: {
         tenantId,
         country: input.country,
         status: 'DRAFT',
         payload: input.payload as any,
+        createdById: userId,
+        updatedById: userId,
       },
     });
+
+    // Registra no audit log
+    const customerName = (input.payload as any)?.customer?.name ||
+                         (input.payload as any)?.recipientName ||
+                         'Cliente';
+    await this.auditService.log({
+      tenantId,
+      userId,
+      action: 'CREATE',
+      entity: 'Invoice',
+      entityId: invoice.id,
+      entityName: `Invoice ${input.country} - ${customerName}`,
+      newData: invoice as any,
+    });
+
+    return invoice;
   }
 
   async findAll(tenantId: string, page = 1, limit = 20, status?: InvoiceStatus) {
@@ -77,7 +97,7 @@ export class InvoicesService {
     return invoice;
   }
 
-  async issue(id: string, tenantId: string) {
+  async issue(id: string, tenantId: string, userId: string) {
     const invoice = await this.prisma.invoice.findFirst({
       where: { id, tenantId },
     });
@@ -104,6 +124,9 @@ export class InvoicesService {
 
       const updateData: any = {
         result: result as any,
+        updatedById: userId,
+        issuedById: userId,
+        issuedAt: new Date(),
       };
 
       if (result.error) {
@@ -112,10 +135,25 @@ export class InvoicesService {
         updateData.status = 'ISSUED';
       }
 
-      return this.prisma.invoice.update({
+      const updatedInvoice = await this.prisma.invoice.update({
         where: { id },
         data: updateData,
       });
+
+      // Registra no audit log
+      const customerName = payload?.customer?.name || payload?.recipientName || 'Cliente';
+      await this.auditService.log({
+        tenantId,
+        userId,
+        action: 'ISSUE',
+        entity: 'Invoice',
+        entityId: id,
+        entityName: `Invoice ${invoice.country} - ${customerName}`,
+        oldData: { status: invoice.status } as any,
+        newData: { status: updatedInvoice.status, result: result } as any,
+      });
+
+      return updatedInvoice;
     } catch (error) {
       await this.prisma.invoice.update({
         where: { id },
@@ -131,7 +169,7 @@ export class InvoicesService {
     }
   }
 
-  async cancel(id: string, tenantId: string) {
+  async cancel(id: string, tenantId: string, userId: string) {
     const invoice = await this.prisma.invoice.findFirst({
       where: { id, tenantId },
     });
@@ -144,9 +182,28 @@ export class InvoicesService {
       throw new BadRequestException('Issued invoices cannot be canceled');
     }
 
-    return this.prisma.invoice.update({
+    const updatedInvoice = await this.prisma.invoice.update({
       where: { id },
-      data: { status: 'CANCELED' },
+      data: {
+        status: 'CANCELED',
+        updatedById: userId,
+      },
     });
+
+    // Registra no audit log
+    const payload = invoice.payload as any;
+    const customerName = payload?.customer?.name || payload?.recipientName || 'Cliente';
+    await this.auditService.log({
+      tenantId,
+      userId,
+      action: 'CANCEL',
+      entity: 'Invoice',
+      entityId: id,
+      entityName: `Invoice ${invoice.country} - ${customerName}`,
+      oldData: { status: invoice.status } as any,
+      newData: { status: 'CANCELED' } as any,
+    });
+
+    return updatedInvoice;
   }
 }

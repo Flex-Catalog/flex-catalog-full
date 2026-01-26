@@ -43,6 +43,15 @@ model User {
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  // Relações de auditoria
+  createdProducts   Product[]  @relation("ProductCreatedBy")
+  updatedProducts   Product[]  @relation("ProductUpdatedBy")
+  createdCategories Category[] @relation("CategoryCreatedBy")
+  updatedCategories Category[] @relation("CategoryUpdatedBy")
+  createdInvoices   Invoice[]  @relation("InvoiceCreatedBy")
+  updatedInvoices   Invoice[]  @relation("InvoiceUpdatedBy")
+  auditLogs         AuditLog[]
+
   @@unique([tenantId, email])
   @@index([tenantId])
   @@index([email])
@@ -54,54 +63,96 @@ model Category {
   name              String
   parentId          String?  @db.ObjectId
   attributeTemplate Json?
+  createdById       String?  @db.ObjectId
+  updatedById       String?  @db.ObjectId
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  tenant   Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children Category[] @relation("CategoryToCategory")
-  products Product[]
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent    Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children  Category[] @relation("CategoryToCategory")
+  products  Product[]
+  createdBy User?      @relation("CategoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedBy User?      @relation("CategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([tenantId])
   @@index([parentId])
+  @@index([createdById])
 }
 
 model Product {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  tenantId   String   @db.ObjectId
-  categoryId String?  @db.ObjectId
-  name       String
-  sku        String?
-  priceCents Int
-  currency   String   @default("USD")
-  attributes Json     @default("{}")
-  fiscal     Json?
-  images     String[]
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId    String   @db.ObjectId
+  categoryId  String?  @db.ObjectId
+  name        String
+  sku         String?
+  priceCents  Int
+  currency    String   @default("USD")
+  attributes  Json     @default("{}")
+  fiscal      Json?
+  images      String[]
+  isActive    Boolean  @default(true)
+  createdById String?  @db.ObjectId
+  updatedById String?  @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy User?     @relation("ProductCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedBy User?     @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@unique([tenantId, sku])
   @@index([tenantId])
   @@index([categoryId])
   @@index([isActive])
+  @@index([createdById])
 }
 
 model Invoice {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  tenantId  String   @db.ObjectId
-  country   String
-  status    String   @default("DRAFT")
-  payload   Json
-  result    Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId    String   @db.ObjectId
+  country     String
+  status      String   @default("DRAFT")
+  payload     Json
+  result      Json?
+  createdById String?  @db.ObjectId
+  updatedById String?  @db.ObjectId
+  issuedById  String?  @db.ObjectId
+  issuedAt    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User?  @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedBy User?  @relation("InvoiceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([tenantId])
   @@index([status])
+  @@index([createdById])
+  @@index([issuedAt])
+}
+
+// ===== AUDIT LOG =====
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId   String   @db.ObjectId
+  userId     String   @db.ObjectId
+  action     String   // CREATE, UPDATE, DELETE, ISSUE, CANCEL, LOGIN, LOGOUT
+  entity     String   // Product, Category, Invoice, User
+  entityId   String?  // ID do registro afetado
+  entityName String?  // Nome/descrição para fácil identificação
+  oldData    Json?    // Dados antes da alteração
+  newData    Json?    // Dados após a alteração
+  metadata   Json?    // Informações adicionais (IP, user-agent, etc)
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
 }

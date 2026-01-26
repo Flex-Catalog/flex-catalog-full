@@ -61,6 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Link href="/app/invoices">{t('invoices.title')}</Link>
             <Link href="/app/reports">{t('reports.title')}</Link>
             <Link href="/app/users">{t('users.title')}</Link>
+            <Link href="/app/audit">{t('nav.audit')}</Link>
             <Link href="/app/billing">{t('billing.title')}</Link>
             <button onClick={handleLogout} className="ml-4">
               {t('auth.logout')}

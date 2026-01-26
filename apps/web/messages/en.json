@@ -14,7 +14,10 @@
     "previous": "Previous",
     "search": "Search",
     "filter": "Filter",
-    "actions": "Actions"
+    "actions": "Actions",
+    "all": "All",
+    "page": "Page",
+    "of": "of"
   },
   "validation": {
     "required": "Required field",
@@ -144,6 +147,24 @@
     "invoices": "Invoices",
     "reports": "Reports",
     "users": "Users",
-    "billing": "Subscription"
+    "billing": "Subscription",
+    "audit": "Audit Log"
+  },
+  "audit": {
+    "title": "Audit Log",
+    "totalActions": "Total Actions",
+    "last30Days": "Last 30 days",
+    "byAction": "By Action",
+    "byEntity": "By Entity",
+    "topUsers": "Most Active Users",
+    "filterAction": "Action",
+    "filterEntity": "Entity",
+    "noLogs": "No activity logs found",
+    "by": "by",
+    "viewDetails": "View details",
+    "viewDeleted": "View deleted data",
+    "viewChanges": "View changes",
+    "before": "Before",
+    "after": "After"
   }
 }

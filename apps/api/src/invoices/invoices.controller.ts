@@ -59,20 +59,20 @@ export class InvoicesController {
   @RequirePermissions('INVOICE_ISSUE')
   @ApiOperation({ summary: 'Create new invoice' })
   async create(@CurrentUser() user: AuthUser, @Body() dto: CreateInvoiceDto) {
-    return this.invoicesService.create(user.tenantId, dto);
+    return this.invoicesService.create(user.tenantId, user.id, dto);
   }
 
   @Post(':id/issue')
   @RequirePermissions('INVOICE_ISSUE')
   @ApiOperation({ summary: 'Issue invoice (generate fiscal document)' })
   async issue(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.invoicesService.issue(id, user.tenantId);
+    return this.invoicesService.issue(id, user.tenantId, user.id);
   }
 
   @Patch(':id/cancel')
   @RequirePermissions('INVOICE_ISSUE')
   @ApiOperation({ summary: 'Cancel invoice' })
   async cancel(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.invoicesService.cancel(id, user.tenantId);
+    return this.invoicesService.cancel(id, user.tenantId, user.id);
   }
 }
