@@ -405,7 +405,7 @@ export class GetProductMetricsQuery
       categoryMap.set(cat.id, cat.name);
     }
 
-    const categoryStats = byCategory.map((item) => ({
+    const categoryStats = byCategory.map((item: any) => ({
       categoryId: item.categoryId,
       categoryName: item.categoryId ? categoryMap.get(item.categoryId) ?? 'Unknown' : 'Uncategorized',
       count: item._count,
@@ -449,7 +449,7 @@ export class GetRecentActivityQuery
       },
     });
 
-    const activities = logs.map((log) =>
+    const activities = logs.map((log: any) =>
       Object.freeze({
         id: log.id,
         action: log.action,

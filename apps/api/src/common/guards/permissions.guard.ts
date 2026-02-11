@@ -41,7 +41,7 @@ export class PermissionsGuard implements CanActivate {
 
     for (const role of roles) {
       const rolePermissions = ROLE_PERMISSIONS[role] || [];
-      rolePermissions.forEach((p) => permissions.add(p));
+      rolePermissions.forEach((p: Permission) => permissions.add(p));
     }
 
     return Array.from(permissions);

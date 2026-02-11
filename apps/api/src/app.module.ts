@@ -18,6 +18,7 @@ import { AuditModule } from './audit/audit.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { ServiceOrderModule } from './modules/service-order/service-order.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantStatusGuard } from './common/guards/tenant-status.guard';
@@ -43,6 +44,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     CatalogModule, // Products + Categories
     InvoiceModule, // Invoices + Fiscal Providers
     AnalyticsModule, // Dashboard + Reports
+    ServiceOrderModule, // Service Orders + Receipts + NFS-e
 
     // Supporting Modules
     BillingModule,

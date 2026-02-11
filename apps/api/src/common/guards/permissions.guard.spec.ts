@@ -38,17 +38,18 @@ describe('PermissionsGuard', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(undefined);
 
     const context = createMockExecutionContext({
-      permissions: ['PRODUCT_READ'],
+      roles: ['TENANT_ADMIN'],
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
-  it('should allow access when user has required permission', () => {
+  it('should allow access when user has required permission via role', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['PRODUCT_READ']);
 
+    // TENANT_ADMIN has PRODUCT_READ permission
     const context = createMockExecutionContext({
-      permissions: ['PRODUCT_READ', 'PRODUCT_WRITE'],
+      roles: ['TENANT_ADMIN'],
     });
 
     expect(guard.canActivate(context)).toBe(true);
@@ -60,27 +61,28 @@ describe('PermissionsGuard', () => {
       .mockReturnValue(['PRODUCT_READ', 'PRODUCT_WRITE']);
 
     const context = createMockExecutionContext({
-      permissions: ['PRODUCT_READ', 'PRODUCT_WRITE', 'INVOICE_READ'],
+      roles: ['TENANT_ADMIN'],
     });
 
     expect(guard.canActivate(context)).toBe(true);
   });
 
   it('should deny access when user lacks required permission', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['PRODUCT_WRITE']);
+    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['TENANT_MANAGE']);
 
+    // VIEWER role doesn't have TENANT_MANAGE permission
     const context = createMockExecutionContext({
-      permissions: ['PRODUCT_READ'],
+      roles: ['VIEWER'],
     });
 
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
-  it('should deny access when user has no permissions', () => {
+  it('should deny access when user has no roles', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(['PRODUCT_READ']);
 
     const context = createMockExecutionContext({
-      permissions: [],
+      roles: [],
     });
 
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);

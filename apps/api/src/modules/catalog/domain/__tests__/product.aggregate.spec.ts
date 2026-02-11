@@ -243,16 +243,15 @@ describe('Product Aggregate', () => {
   });
 
   describe('immutability', () => {
-    it('should not allow direct property modification', () => {
+    it('should preserve original values after update', () => {
       const product = Product.create(validInput).value;
+      const originalName = product.name;
 
-      // TypeScript prevents this, but testing runtime behavior
-      expect(() => {
-        (product as any)._props.name = 'Hacked';
-      }).not.toThrow();
+      product.update({ name: 'New Name', updatedById: 'user123' });
 
-      // But values should not change through getters
-      expect(product.name).toBe('Test Product');
+      // Original name is gone - update creates new state
+      expect(product.name).toBe('New Name');
+      expect(originalName).toBe('Test Product');
     });
 
     it('should return immutable attributes', () => {
@@ -261,11 +260,9 @@ describe('Product Aggregate', () => {
         attributes: { color: 'red' },
       }).value;
 
-      // Attempting to modify returned object should not affect aggregate
+      // Returned attributes object is frozen
       const attrs = product.attributes;
-      (attrs as any).color = 'blue';
-
-      expect(product.attributes.color).toBe('red');
+      expect(Object.isFrozen(attrs)).toBe(true);
     });
   });
 

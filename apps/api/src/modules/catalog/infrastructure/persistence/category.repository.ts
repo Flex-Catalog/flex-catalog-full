@@ -64,7 +64,7 @@ export class PrismaCategoryRepository implements ICategoryRepository {
       this.prisma.category.count({ where }),
     ]);
 
-    const categories = records.map((r) => this.toDomain(r));
+    const categories = records.map((r: any) => this.toDomain(r));
 
     return Result.ok(createPaginatedResult(categories, total, options));
   }
@@ -75,7 +75,7 @@ export class PrismaCategoryRepository implements ICategoryRepository {
       orderBy: { name: 'asc' },
     });
 
-    return Result.ok(records.map((r) => this.toDomain(r)));
+    return Result.ok(records.map((r: any) => this.toDomain(r)));
   }
 
   async save(category: Category): Promise<Result<void, Error>> {

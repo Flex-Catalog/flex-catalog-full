@@ -2,17 +2,13 @@ import {
   Controller,
   Get,
   Query,
-  UseGuards,
   Request,
   Param,
 } from '@nestjs/common';
 import { AuditService, AuditAction, AuditEntity } from './audit.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PermissionsGuard } from '../auth/guards/permissions.guard';
-import { RequirePermissions } from '../auth/decorators/permissions.decorator';
+import { RequirePermissions } from '../common/decorators';
 
 @Controller('audit')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 

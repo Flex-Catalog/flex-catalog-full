@@ -74,7 +74,7 @@ export class PrismaProductRepository implements IProductRepository {
       this.prisma.product.count({ where }),
     ]);
 
-    const products = records.map((r) => this.toDomain(r));
+    const products = records.map((r: any) => this.toDomain(r));
 
     return Result.ok(createPaginatedResult(products, total, options));
   }

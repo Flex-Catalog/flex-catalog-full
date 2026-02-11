@@ -60,7 +60,7 @@ export class BrazilFiscalProvider implements IFiscalProvider {
       return Result.ok({
         success: false,
         error: validation.error.message,
-      });
+      } as FiscalProviderResult);
     }
 
     try {
@@ -71,8 +71,8 @@ export class BrazilFiscalProvider implements IFiscalProvider {
       if (mockResponse.error) {
         return Result.ok({
           success: false,
-          error: mockResponse.error,
-        });
+          error: mockResponse.error as string,
+        } as FiscalProviderResult);
       }
 
       return Result.ok({
@@ -86,12 +86,12 @@ export class BrazilFiscalProvider implements IFiscalProvider {
           xmlBase64: mockResponse.xmlBase64,
           protocolo: mockResponse.protocolo,
         }),
-      });
+      } as FiscalProviderResult);
     } catch (error) {
       return Result.ok({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-      });
+      } as FiscalProviderResult);
     }
   }
 

@@ -61,7 +61,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
       this.prisma.invoice.count({ where }),
     ]);
 
-    const invoices = records.map((r) => this.toDomain(r));
+    const invoices = records.map((r: any) => this.toDomain(r));
 
     return Result.ok(createPaginatedResult(invoices, total, options));
   }

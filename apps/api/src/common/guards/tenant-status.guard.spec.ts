@@ -82,11 +82,11 @@ describe('TenantStatusGuard', () => {
     expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
   });
 
-  it('should deny access when no user is present and route is not public', () => {
+  it('should allow access when no user is present (defers to JwtAuthGuard)', () => {
     jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
 
     const context = createMockExecutionContext(null);
 
-    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+    expect(guard.canActivate(context)).toBe(true);
   });
 });

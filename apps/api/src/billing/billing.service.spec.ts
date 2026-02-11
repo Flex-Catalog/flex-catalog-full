@@ -67,14 +67,14 @@ describe('BillingService', () => {
       };
 
       // Mock stripe subscription retrieval
-      jest.spyOn(service as any, 'stripe', 'get').mockReturnValue({
+      (service as any).stripe = {
         subscriptions: {
           retrieve: jest.fn().mockResolvedValue({
             id: 'sub_123',
             current_period_end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           }),
         },
-      });
+      };
 
       mockTenantsService.updateStripeInfo.mockResolvedValue({});
 

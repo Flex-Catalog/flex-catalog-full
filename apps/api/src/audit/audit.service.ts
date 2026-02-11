@@ -203,26 +203,26 @@ export class AuditService {
     ]);
 
     // Busca nomes dos usuários
-    const userIds = byUser.map((u) => u.userId);
+    const userIds = byUser.map((u: any) => u.userId);
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
       select: { id: true, name: true, email: true },
     });
 
-    const userMap = new Map(users.map((u) => [u.id, u]));
+    const userMap = new Map(users.map((u: any) => [u.id, u]));
 
     return {
       period: { days, startDate, endDate: new Date() },
       total,
-      byAction: byAction.map((a) => ({
+      byAction: byAction.map((a: any) => ({
         action: a.action,
         count: a._count.action,
       })),
-      byEntity: byEntity.map((e) => ({
+      byEntity: byEntity.map((e: any) => ({
         entity: e.entity,
         count: e._count.entity,
       })),
-      byUser: byUser.map((u) => ({
+      byUser: byUser.map((u: any) => ({
         user: userMap.get(u.userId),
         count: u._count.userId,
       })),

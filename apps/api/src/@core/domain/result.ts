@@ -191,7 +191,6 @@ export class DomainError extends Error {
     super(message);
     this.code = code;
     this.name = 'DomainError';
-    Object.freeze(this);
   }
 }
 

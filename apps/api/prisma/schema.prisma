@@ -133,6 +133,63 @@ model Invoice {
   @@index([issuedAt])
 }
 
+// ===== SERVICE ORDER =====
+model ServiceOrder {
+  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId               String   @db.ObjectId
+  orderNumber            String
+  voucherNumber          String?
+  status                 String   @default("DRAFT") // DRAFT, IN_PROGRESS, COMPLETED, INVOICED, CANCELED
+
+  // Service details
+  serviceType            String   // CREW_TRANSPORT, SUPPLY_TRANSPORT, etc
+  serviceDescription     String
+  servicePeriod          String   // DAY, NIGHT, DAY_NIGHT, WEEKEND_DAY, etc
+  serviceDate            DateTime
+  startTime              DateTime
+  endTime                DateTime?
+
+  // Vessel info
+  vesselName             String
+  vesselType             String   // NATIONAL, FOREIGN
+  anchorageArea          String?
+
+  // Company info
+  companyName            String
+  companyTaxId           String?
+
+  // Boat/crew info
+  boatName               String?
+  captainName            String?
+  employeeId             String?  @db.ObjectId
+  employeeName           String?
+
+  // People transported
+  transportedPeople      Json?    // Array of { name, role, document }
+  requestedBy            String?
+
+  // Financial
+  rateCents              Int
+  currency               String   @default("BRL")
+  additionalChargesCents Int      @default(0)
+  discountCents          Int      @default(0)
+  totalCents             Int
+
+  notes                  String?
+  createdById            String   @db.ObjectId
+  updatedById            String   @db.ObjectId
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([companyName])
+  @@index([vesselName])
+  @@index([serviceDate])
+  @@index([createdAt])
+}
+
 // ===== AUDIT LOG =====
 model AuditLog {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId

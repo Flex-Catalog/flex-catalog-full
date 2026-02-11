@@ -12,7 +12,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly prisma: PrismaService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthBearerToken(),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });
@@ -46,7 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const permissions = new Set<Permission>();
     for (const role of roles) {
       const rolePerms = ROLE_PERMISSIONS[role] || [];
-      rolePerms.forEach((p) => permissions.add(p));
+      rolePerms.forEach((p: Permission) => permissions.add(p));
     }
     return Array.from(permissions);
   }

@@ -5,7 +5,7 @@
  * - SRP: Only handles value semantics
  * - Pure: No side effects
  */
-export abstract class ValueObject<T extends Record<string, unknown>> {
+export abstract class ValueObject<T> {
   protected readonly props: Readonly<T>;
 
   protected constructor(props: T) {
@@ -43,7 +43,7 @@ export abstract class ValueObject<T extends Record<string, unknown>> {
    * - Immutability: Returns new instance
    */
   protected copyWith(props: Partial<T>): T {
-    return { ...this.props, ...props };
+    return { ...this.props, ...props } as T;
   }
 }
 
