@@ -8,6 +8,8 @@ interface CreateTenantInput {
   locale?: SupportedLocale;
   features?: Feature[];
   status?: TenantStatus;
+  taxId?: string;
+  trialEndsAt?: Date;
 }
 
 @Injectable()
@@ -22,12 +24,18 @@ export class TenantsService {
         locale: input.locale || 'en',
         features: input.features || [],
         status: input.status || 'PENDING_PAYMENT',
+        taxId: input.taxId,
+        trialEndsAt: input.trialEndsAt,
       },
     });
   }
 
   async findById(id: string) {
     return this.prisma.tenant.findUnique({ where: { id } });
+  }
+
+  async findByTaxId(taxId: string) {
+    return this.prisma.tenant.findFirst({ where: { taxId } });
   }
 
   async findByStripeCustomerId(stripeCustomerId: string) {
@@ -60,6 +68,16 @@ export class TenantsService {
     return this.prisma.tenant.update({
       where: { id },
       data,
+    });
+  }
+
+  async count() {
+    return this.prisma.tenant.count();
+  }
+
+  async findAll() {
+    return this.prisma.tenant.findMany({
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

@@ -13,12 +13,17 @@ import { TenantsModule } from './tenants/tenants.module';
 import { BillingModule } from './billing/billing.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { AuditModule } from './audit/audit.module';
+import { EmailModule } from './email/email.module';
 
 // DDD Bounded Contexts
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { ServiceOrderModule } from './modules/service-order/service-order.module';
+import { CouponModule } from './modules/coupon/coupon.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { SupportModule } from './modules/support/support.module';
+import { AffiliateModule } from './modules/affiliate/affiliate.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantStatusGuard } from './common/guards/tenant-status.guard';
@@ -34,6 +39,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     // Core Infrastructure
     CoreModule,
     PrismaModule,
+    EmailModule,
 
     // Auth & Identity (legacy for now)
     AuthModule,
@@ -50,6 +56,10 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     BillingModule,
     UploadsModule,
     AuditModule,
+    CouponModule,
+    AdminModule,
+    SupportModule,
+    AffiliateModule,
   ],
   providers: [
     {

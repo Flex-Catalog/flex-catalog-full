@@ -4,9 +4,10 @@ import { BillingService } from './billing.service';
 import { BillingController } from './billing.controller';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { TenantsModule } from '../tenants/tenants.module';
+import { AffiliateModule } from '../modules/affiliate/affiliate.module';
 
 @Module({
-  imports: [ConfigModule, forwardRef(() => TenantsModule)],
+  imports: [ConfigModule, forwardRef(() => TenantsModule), AffiliateModule],
   controllers: [BillingController, StripeWebhookController],
   providers: [BillingService],
   exports: [BillingService],

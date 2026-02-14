@@ -166,5 +166,183 @@
     "viewChanges": "View changes",
     "before": "Before",
     "after": "After"
+  },
+  "support": {
+    "title": "Support",
+    "loading": "Loading...",
+    "newTicket": "New Ticket",
+    "subject": "Subject",
+    "message": "Message",
+    "category": "Category",
+    "priority": "Priority",
+    "statusLabel": "Status",
+    "date": "Date",
+    "send": "Send",
+    "cancel": "Cancel",
+    "close": "Close",
+    "admin": "Admin",
+    "replyPlaceholder": "Type your reply...",
+    "noTickets": "No tickets found. Create one to send us your question or suggestion.",
+    "categories": {
+      "featureRequest": "Feature Request",
+      "bugReport": "Bug Report",
+      "complaint": "Complaint",
+      "question": "Question",
+      "other": "Other"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "loading": "Loading...",
+    "totalCustomers": "Total Customers",
+    "activeCustomers": "Active Customers",
+    "trialCustomers": "Trial Customers",
+    "totalUsers": "Total Users",
+    "totalCoupons": "Total Coupons",
+    "activeCoupons": "Active Coupons",
+    "customerList": "Customer List",
+    "company": "Company",
+    "country": "Country",
+    "status": "Status",
+    "taxIdLabel": "Tax ID",
+    "users": "Users",
+    "createdAt": "Created",
+    "noCustomers": "No customers found"
+  },
+  "affiliate": {
+    "title": "Affiliates",
+    "optional": "optional",
+    "description": "Refer up to 2 affiliates who will earn commissions on your payments.",
+    "identifierPlaceholder": "Affiliate email or Tax ID",
+    "typeStandard": "Standard",
+    "typePartner": "Partner",
+    "add": "Add",
+    "maxReached": "Maximum limit of 2 affiliates reached.",
+    "inviteMessage": "You have been invited as an affiliate! Complete your registration to activate.",
+    "settingsTitle": "Manage Affiliates",
+    "settingsDescription": "Link affiliates to your company. They will earn commissions on your monthly payments.",
+    "linkedAffiliates": "Linked Affiliates",
+    "noAffiliates": "No affiliates linked yet.",
+    "addAffiliate": "Add Affiliate",
+    "addDescription": "Enter the email or Tax ID of the person. If they don't have an account, they'll receive an email invite.",
+    "identifier": "Email or Tax ID",
+    "affiliateType": "Affiliate Type",
+    "permanentWarning": "Warning: once saved, the affiliate link cannot be removed.",
+    "addSuccess": "Affiliate linked successfully!",
+    "addError": "Error linking affiliate.",
+    "loadError": "Error loading affiliates.",
+    "commission": "Commission",
+    "statusActive": "Active",
+    "statusPending": "Pending",
+    "statusPaid": "Paid",
+    "statusPendingPayment": "Awaiting",
+    "commissionsTitle": "My Commissions",
+    "commissionsDescription": "View your commissions as an affiliate linked to companies.",
+    "notAffiliate": "You are not an affiliate of any company at the moment.",
+    "linkedCompanies": "Linked Companies",
+    "totalEarnings": "Total Earned",
+    "pendingEarnings": "Pending",
+    "totalTransactions": "Total Transactions",
+    "commissionHistory": "Commission History",
+    "noCommissions": "No commissions recorded yet.",
+    "company": "Company",
+    "period": "Period",
+    "rate": "Rate",
+    "amount": "Amount"
+  },
+  "landing": {
+    "login": "Login",
+    "createAccount": "Create Free Account",
+    "heroSubtitle": "Complete management platform for maritime services. Product catalog, service orders, invoices and more.",
+    "freeTrialBadge": "Free for 2 months — no credit card required",
+    "startFree": "Start Free",
+    "seePricing": "See Pricing",
+    "featuresTitle": "Everything you need in one place",
+    "featuresSubtitle": "Manage your entire maritime business with professional, integrated tools.",
+    "features": {
+      "products": {
+        "title": "Product Catalog",
+        "description": "Manage products with SKU, multi-currency pricing, categories and custom attributes."
+      },
+      "invoices": {
+        "title": "Invoices",
+        "description": "Create and issue invoices with automatic validation and NFS-e integration."
+      },
+      "serviceOrders": {
+        "title": "Service Orders",
+        "description": "Control maritime service orders with day, night and weekend period tracking."
+      },
+      "nfse": {
+        "title": "Integrated NFS-e",
+        "description": "Automatic electronic service invoice issuance directly from the system."
+      },
+      "multiTenant": {
+        "title": "Multi-Company",
+        "description": "Each company has its own isolated environment with its own data, users and settings."
+      },
+      "reports": {
+        "title": "Reports & Dashboard",
+        "description": "View real-time metrics for sales, products, categories and audit trails."
+      }
+    },
+    "pricingTitle": "Simple, transparent pricing",
+    "pricingSubtitle": "Start for free, pay only when you're ready. No surprises.",
+    "pricing": {
+      "perMonth": "month",
+      "trial": {
+        "label": "Free Trial",
+        "price": "$0",
+        "period": "For 2 months",
+        "feature1": "Full access to all features",
+        "feature2": "Unlimited users",
+        "feature3": "No credit card required"
+      },
+      "discount": {
+        "badge": "Most Popular",
+        "label": "50% Off",
+        "period": "For 6 months after trial",
+        "feature1": "Everything in free plan",
+        "feature2": "Priority support",
+        "feature3": "Discount coupons applicable"
+      },
+      "full": {
+        "label": "Full Plan",
+        "period": "After discount period",
+        "feature1": "Permanent full access",
+        "feature2": "Dedicated support",
+        "feature3": "New features included"
+      }
+    },
+    "couponHint": "Have a discount coupon? You can apply it during registration.",
+    "ctaTitle": "Ready to transform your maritime management?",
+    "ctaSubtitle": "Join companies already saving time and money with FlexCatalog.",
+    "allRightsReserved": "All rights reserved.",
+    "register": {
+      "companyName": "Company Name",
+      "taxId": "Tax ID (CPF or CNPJ)",
+      "taxIdPlaceholder": "000.000.000-00 or 00.000.000/0001-00",
+      "couponCode": "Discount Coupon",
+      "couponCodePlaceholder": "Enter your coupon (optional)",
+      "couponApplied": "Coupon applied: {discount}% off for {months} months",
+      "couponInvalid": "Invalid or expired coupon",
+      "applyCoupon": "Apply",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in",
+      "termsAgree": "By registering, you agree to our terms of service."
+    },
+    "verifyEmail": {
+      "verifying": "Verifying your email...",
+      "successTitle": "Email Verified!",
+      "successMessage": "Your email has been verified successfully. You can now log in.",
+      "errorTitle": "Verification Error",
+      "failed": "Could not verify email. The link may have expired.",
+      "noToken": "Verification token not found.",
+      "goToLogin": "Go to Login"
+    }
   }
 }

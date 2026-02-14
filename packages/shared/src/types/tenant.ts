@@ -9,9 +9,11 @@ export interface Tenant {
   locale: SupportedLocale;
   features: Feature[];
   status: TenantStatus;
+  taxId?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   currentPeriodEnd?: Date;
+  trialEndsAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

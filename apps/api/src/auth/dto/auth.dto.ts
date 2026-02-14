@@ -1,5 +1,18 @@
-import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, IsArray, ValidateNested, IsIn } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+class AffiliateIdentifierDto {
+  @ApiProperty({ example: 'affiliate@example.com', description: 'Email or CPF' })
+  @IsString()
+  identifier: string;
+
+  @ApiProperty({ example: 'STANDARD', required: false })
+  @IsString()
+  @IsOptional()
+  @IsIn(['STANDARD', 'PARTNER'])
+  type?: 'STANDARD' | 'PARTNER';
+}
 
 export class RegisterDto {
   @ApiProperty({ example: 'Acme Corp' })
@@ -27,6 +40,28 @@ export class RegisterDto {
   @IsString()
   @MinLength(8)
   password: string;
+
+  @ApiProperty({ example: '12.345.678/0001-90', required: false })
+  @IsString()
+  @IsOptional()
+  taxId?: string;
+
+  @ApiProperty({ example: 'WELCOME50', required: false })
+  @IsString()
+  @IsOptional()
+  couponCode?: string;
+
+  @ApiProperty({ type: [AffiliateIdentifierDto], required: false, description: 'Up to 2 affiliates' })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => AffiliateIdentifierDto)
+  affiliates?: AffiliateIdentifierDto[];
+
+  @ApiProperty({ required: false, description: 'Affiliate invite token (if registering via invite)' })
+  @IsString()
+  @IsOptional()
+  inviteToken?: string;
 }
 
 export class LoginDto {

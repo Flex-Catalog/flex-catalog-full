@@ -8,6 +8,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { TenantsModule } from '../tenants/tenants.module';
 import { UsersModule } from '../users/users.module';
 import { BillingModule } from '../billing/billing.module';
+import { AffiliateModule } from '../modules/affiliate/affiliate.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { BillingModule } from '../billing/billing.module';
     TenantsModule,
     UsersModule,
     BillingModule,
+    AffiliateModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { BillingService } from './billing.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { AffiliateService } from '../modules/affiliate/affiliate.service';
 import Stripe from 'stripe';
 
 describe('BillingService', () => {
@@ -14,6 +15,10 @@ describe('BillingService', () => {
     findByStripeCustomerId: jest.fn(),
     updateStripeInfo: jest.fn(),
     updateStatus: jest.fn(),
+  };
+
+  const mockAffiliateService = {
+    processPaymentCommissions: jest.fn().mockResolvedValue([]),
   };
 
   const mockConfigService = {
@@ -39,6 +44,10 @@ describe('BillingService', () => {
         {
           provide: ConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: AffiliateService,
+          useValue: mockAffiliateService,
         },
       ],
     }).compile();

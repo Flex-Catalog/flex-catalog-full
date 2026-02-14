@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -10,8 +11,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { TenantsService } from '../tenants/tenants.service';
 import { UsersService } from '../users/users.service';
 import { BillingService } from '../billing/billing.service';
+import { EmailService } from '../email/email.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { AffiliateService } from '../modules/affiliate/affiliate.service';
 import { DEFAULT_FEATURES, TokenPayload, AuthResponse } from '@product-catalog/shared';
+import * as crypto from 'crypto';
+
+const TRIAL_DAYS = 61; // ~2 months
+const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
 @Injectable()
 export class AuthService {
@@ -21,6 +29,9 @@ export class AuthService {
     private readonly tenantsService: TenantsService,
     private readonly usersService: UsersService,
     private readonly billingService: BillingService,
+    private readonly emailService: EmailService,
+    private readonly prisma: PrismaService,
+    private readonly affiliateService: AffiliateService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
@@ -30,24 +41,103 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Create tenant with PENDING_PAYMENT status
+    // Check Tax ID uniqueness
+    if (dto.taxId) {
+      const normalizedTaxId = dto.taxId.replace(/[.\-\/\s]/g, '');
+      const existingTenant = await this.tenantsService.findByTaxId(normalizedTaxId);
+      if (existingTenant) {
+        throw new ConflictException('Tax ID already registered');
+      }
+    }
+
+    // Validate coupon if provided
+    let coupon: { id: string; code: string; discountPercent: number; durationMonths: number } | null = null;
+    if (dto.couponCode) {
+      const found = await this.prisma.coupon.findUnique({
+        where: { code: dto.couponCode.toUpperCase() },
+      });
+
+      if (!found || !found.isActive) {
+        throw new BadRequestException('Invalid or expired coupon');
+      }
+      if (found.expiresAt && found.expiresAt < new Date()) {
+        throw new BadRequestException('Invalid or expired coupon');
+      }
+      if (found.maxUses && found.currentUses >= found.maxUses) {
+        throw new BadRequestException('Coupon usage limit reached');
+      }
+
+      coupon = {
+        id: found.id,
+        code: found.code,
+        discountPercent: found.discountPercent,
+        durationMonths: found.durationMonths,
+      };
+    }
+
+    // Calculate trial end date
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
+
+    // Create tenant with TRIAL status (free for 2 months)
     const tenant = await this.tenantsService.create({
       name: dto.companyName,
       country: dto.country as any,
       locale: dto.locale as any,
       features: DEFAULT_FEATURES,
-      status: 'PENDING_PAYMENT',
+      status: 'TRIAL',
+      taxId: dto.taxId ? dto.taxId.replace(/[.\-\/\s]/g, '') : undefined,
+      trialEndsAt,
     });
 
-    // Create admin user
+    // Create admin user with verification token
     const passwordHash = await argon2.hash(dto.password);
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setHours(verificationExpires.getHours() + VERIFICATION_TOKEN_EXPIRY_HOURS);
+
     const user = await this.usersService.create({
       tenantId: tenant.id,
       email: dto.email,
       name: dto.name,
       passwordHash,
       roles: ['TENANT_ADMIN'],
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires,
     });
+
+    // Send verification email (non-blocking)
+    this.emailService
+      .sendVerificationEmail(dto.email, verificationToken, dto.locale)
+      .catch(() => {}); // Don't block registration on email failure
+
+    // Link affiliates if provided (max 2, non-blocking)
+    if (dto.affiliates && dto.affiliates.length > 0) {
+      for (const aff of dto.affiliates.slice(0, 2)) {
+        try {
+          await this.affiliateService.linkAffiliate({
+            tenantId: tenant.id,
+            identifier: aff.identifier,
+            type: aff.type,
+          });
+        } catch {
+          // Don't block registration if affiliate linking fails
+        }
+      }
+    }
+
+    // If registering via affiliate invite token, activate the affiliate
+    if (dto.inviteToken) {
+      try {
+        await this.affiliateService.activateByInviteToken(
+          dto.inviteToken,
+          user.id,
+          dto.name,
+        );
+      } catch {
+        // Don't block registration if activation fails
+      }
+    }
 
     // Generate tokens
     const tokens = await this.generateTokens({
@@ -61,10 +151,30 @@ export class AuthService {
     const refreshTokenHash = await argon2.hash(tokens.refreshToken);
     await this.usersService.updateRefreshToken(user.id, refreshTokenHash);
 
-    // Create Stripe checkout session
+    // Build Stripe checkout options: trial + introductory 50% discount
+    let stripeCouponId: string | undefined;
+    if (coupon) {
+      // Custom coupon takes priority
+      stripeCouponId = await this.billingService.createStripeCoupon(
+        coupon.code,
+        coupon.discountPercent,
+        coupon.durationMonths,
+      );
+      // Increment coupon usage
+      await this.prisma.coupon.update({
+        where: { id: coupon.id },
+        data: { currentUses: { increment: 1 } },
+      });
+    } else {
+      // Default 50% introductory discount for 6 months after trial
+      stripeCouponId = await this.billingService.getOrCreateIntroductoryCoupon();
+    }
+
+    // Create Stripe checkout session with trial + discount
     const checkoutUrl = await this.billingService.createCheckoutSession(
       tenant.id,
       dto.email,
+      { trialDays: TRIAL_DAYS, stripeCouponId },
     );
 
     return {
@@ -167,11 +277,58 @@ export class AuthService {
     await this.usersService.updateRefreshToken(userId, null);
   }
 
+  async verifyEmail(token: string): Promise<{ verified: boolean }> {
+    const user = await this.prisma.user.findFirst({
+      where: { emailVerificationToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid verification token');
+    }
+
+    if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+      throw new BadRequestException('Verification token expired');
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    });
+
+    return { verified: true };
+  }
+
+  async resendVerification(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    if (user.emailVerified) {
+      return; // Already verified
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setHours(verificationExpires.getHours() + VERIFICATION_TOKEN_EXPIRY_HOURS);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerificationToken: verificationToken,
+        emailVerificationExpires: verificationExpires,
+      },
+    });
+
+    await this.emailService.sendVerificationEmail(user.email, verificationToken);
+  }
+
   private async generateTokens(payload: TokenPayload): Promise<{ accessToken: string; refreshToken: string }> {
     const accessToken = this.jwtService.sign(payload);
-
     const refreshToken = uuidv4();
-
     return { accessToken, refreshToken };
   }
 }

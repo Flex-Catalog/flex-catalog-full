@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { UsersService } from '../users/users.service';
 import { BillingService } from '../billing/billing.service';
+import { EmailService } from '../email/email.service';
+import { AffiliateService } from '../modules/affiliate/affiliate.service';
 import { UnauthorizedException } from '@nestjs/common';
 import * as argon2 from 'argon2';
 
@@ -15,6 +17,7 @@ describe('AuthService', () => {
   const mockPrismaService = {
     tenant: { create: jest.fn(), findUnique: jest.fn() },
     user: { create: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
+    coupon: { findUnique: jest.fn(), update: jest.fn() },
   };
 
   const mockJwtService = {
@@ -37,6 +40,7 @@ describe('AuthService', () => {
   const mockTenantsService = {
     create: jest.fn(),
     findById: jest.fn(),
+    findByTaxId: jest.fn(),
   };
 
   const mockUsersService = {
@@ -48,6 +52,17 @@ describe('AuthService', () => {
 
   const mockBillingService = {
     createCheckoutSession: jest.fn(),
+    getOrCreateIntroductoryCoupon: jest.fn(),
+    createStripeCoupon: jest.fn(),
+  };
+
+  const mockEmailService = {
+    sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockAffiliateService = {
+    linkAffiliate: jest.fn().mockResolvedValue(undefined),
+    activateByInviteToken: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -60,6 +75,8 @@ describe('AuthService', () => {
         { provide: TenantsService, useValue: mockTenantsService },
         { provide: UsersService, useValue: mockUsersService },
         { provide: BillingService, useValue: mockBillingService },
+        { provide: EmailService, useValue: mockEmailService },
+        { provide: AffiliateService, useValue: mockAffiliateService },
       ],
     }).compile();
 
@@ -71,36 +88,99 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('should register a new tenant and user', async () => {
-      const input = {
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'password123',
-        companyName: 'Test Company',
-        country: 'BR',
-      };
+    const input = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+      companyName: 'Test Company',
+      country: 'BR',
+    };
 
-      const mockTenant = { id: 'tenant1', name: 'Test Company' };
-      const mockUser = { id: 'user1', email: 'test@example.com' };
+    it('should register with trial status and introductory discount', async () => {
+      const mockTenant = { id: 'tenant1', name: 'Test Company', status: 'TRIAL' };
 
       mockUsersService.findByEmailGlobal.mockResolvedValue(null);
       mockTenantsService.create.mockResolvedValue(mockTenant);
       mockUsersService.create.mockResolvedValue({
-        ...mockUser,
+        id: 'user1',
+        email: input.email,
         name: input.name,
         roles: ['TENANT_ADMIN'],
         tenantId: mockTenant.id,
       });
       mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
+      mockBillingService.getOrCreateIntroductoryCoupon.mockResolvedValue('FLEX_INTRO_50');
       mockBillingService.createCheckoutSession.mockResolvedValue(
         'https://checkout.stripe.com/test',
       );
 
       const result = await service.register(input);
 
-      expect(result).toHaveProperty('checkoutUrl');
-      expect(mockTenantsService.create).toHaveBeenCalled();
-      expect(mockUsersService.create).toHaveBeenCalled();
+      expect(result.checkoutUrl).toBe('https://checkout.stripe.com/test');
+      expect(result.tenant.status).toBe('TRIAL');
+      expect(mockTenantsService.create).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'TRIAL' }),
+      );
+      expect(mockBillingService.getOrCreateIntroductoryCoupon).toHaveBeenCalled();
+      expect(mockBillingService.createCheckoutSession).toHaveBeenCalledWith(
+        'tenant1',
+        input.email,
+        { trialDays: 61, stripeCouponId: 'FLEX_INTRO_50' },
+      );
+    });
+
+    it('should check tax ID uniqueness', async () => {
+      mockUsersService.findByEmailGlobal.mockResolvedValue(null);
+      mockTenantsService.findByTaxId.mockResolvedValue({ id: 'existing-tenant' });
+
+      await expect(
+        service.register({ ...input, taxId: '12.345.678/0001-90' }),
+      ).rejects.toThrow('Tax ID already registered');
+    });
+
+    it('should validate coupon code when provided', async () => {
+      const mockTenant = { id: 'tenant1', name: 'Test Company', status: 'TRIAL' };
+      const mockCoupon = {
+        id: 'coupon1',
+        code: 'SAVE20',
+        discountPercent: 20,
+        durationMonths: 3,
+        isActive: true,
+        maxUses: 100,
+        currentUses: 5,
+        expiresAt: null,
+      };
+
+      mockUsersService.findByEmailGlobal.mockResolvedValue(null);
+      mockTenantsService.findByTaxId.mockResolvedValue(null);
+      mockPrismaService.coupon.findUnique.mockResolvedValue(mockCoupon);
+      mockTenantsService.create.mockResolvedValue(mockTenant);
+      mockUsersService.create.mockResolvedValue({
+        id: 'user1',
+        email: input.email,
+        name: input.name,
+        roles: ['TENANT_ADMIN'],
+        tenantId: mockTenant.id,
+      });
+      mockUsersService.updateRefreshToken.mockResolvedValue(undefined);
+      mockBillingService.createStripeCoupon.mockResolvedValue('FLEX_SAVE20');
+      mockPrismaService.coupon.update.mockResolvedValue(mockCoupon);
+      mockBillingService.createCheckoutSession.mockResolvedValue(
+        'https://checkout.stripe.com/test',
+      );
+
+      const result = await service.register({
+        ...input,
+        taxId: '123456789',
+        couponCode: 'SAVE20',
+      });
+
+      expect(result.checkoutUrl).toBeDefined();
+      expect(mockBillingService.createStripeCoupon).toHaveBeenCalledWith('SAVE20', 20, 3);
+      expect(mockPrismaService.coupon.update).toHaveBeenCalledWith({
+        where: { id: 'coupon1' },
+        data: { currentUses: { increment: 1 } },
+      });
     });
   });
 
@@ -110,17 +190,12 @@ describe('AuthService', () => {
       const password = 'password123';
       const hashedPassword = await argon2.hash(password);
 
-      const mockUser = {
+      mockUsersService.findByEmailGlobal.mockResolvedValue({
         id: 'user1',
         email,
         passwordHash: hashedPassword,
         tenantId: 'tenant1',
         roles: ['TENANT_ADMIN'],
-        tenant: { status: 'ACTIVE' },
-      };
-
-      mockUsersService.findByEmailGlobal.mockResolvedValue({
-        ...mockUser,
         isActive: true,
         name: 'Test User',
       });

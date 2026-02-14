@@ -166,5 +166,183 @@
     "viewChanges": "Ver cambios",
     "before": "Antes",
     "after": "Después"
+  },
+  "support": {
+    "title": "Soporte",
+    "loading": "Cargando...",
+    "newTicket": "Nuevo Ticket",
+    "subject": "Asunto",
+    "message": "Mensaje",
+    "category": "Categoría",
+    "priority": "Prioridad",
+    "statusLabel": "Estado",
+    "date": "Fecha",
+    "send": "Enviar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "admin": "Admin",
+    "replyPlaceholder": "Escribe tu respuesta...",
+    "noTickets": "No se encontraron tickets. Crea uno para enviarnos tu pregunta o sugerencia.",
+    "categories": {
+      "featureRequest": "Solicitud de Funcionalidad",
+      "bugReport": "Reporte de Bug",
+      "complaint": "Queja",
+      "question": "Pregunta",
+      "other": "Otro"
+    },
+    "priorities": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta"
+    }
+  },
+  "admin": {
+    "title": "Panel de Administración",
+    "loading": "Cargando...",
+    "totalCustomers": "Total de Clientes",
+    "activeCustomers": "Clientes Activos",
+    "trialCustomers": "Clientes en Prueba",
+    "totalUsers": "Total de Usuarios",
+    "totalCoupons": "Total de Cupones",
+    "activeCoupons": "Cupones Activos",
+    "customerList": "Lista de Clientes",
+    "company": "Empresa",
+    "country": "País",
+    "status": "Estado",
+    "taxIdLabel": "ID Fiscal",
+    "users": "Usuarios",
+    "createdAt": "Creado",
+    "noCustomers": "No se encontraron clientes"
+  },
+  "affiliate": {
+    "title": "Afiliados",
+    "optional": "opcional",
+    "description": "Refiere hasta 2 afiliados que recibirán comisiones sobre tus pagos.",
+    "identifierPlaceholder": "Correo o ID fiscal del afiliado",
+    "typeStandard": "Estándar",
+    "typePartner": "Socio",
+    "add": "Agregar",
+    "maxReached": "Límite máximo de 2 afiliados alcanzado.",
+    "inviteMessage": "Has sido invitado como afiliado! Completa tu registro para activar.",
+    "settingsTitle": "Gestionar Afiliados",
+    "settingsDescription": "Vincula afiliados a tu empresa. Ellos recibirán comisiones sobre tus pagos mensuales.",
+    "linkedAffiliates": "Afiliados Vinculados",
+    "noAffiliates": "Ningún afiliado vinculado aún.",
+    "addAffiliate": "Agregar Afiliado",
+    "addDescription": "Ingresa el correo o ID fiscal de la persona. Si no tiene cuenta, recibirá una invitación por correo.",
+    "identifier": "Correo o ID Fiscal",
+    "affiliateType": "Tipo de Afiliado",
+    "permanentWarning": "Atención: una vez guardado, el vínculo con el afiliado no se puede eliminar.",
+    "addSuccess": "Afiliado vinculado exitosamente!",
+    "addError": "Error al vincular afiliado.",
+    "loadError": "Error al cargar afiliados.",
+    "commission": "Comisión",
+    "statusActive": "Activo",
+    "statusPending": "Pendiente",
+    "statusPaid": "Pagado",
+    "statusPendingPayment": "En espera",
+    "commissionsTitle": "Mis Comisiones",
+    "commissionsDescription": "Visualiza tus comisiones como afiliado vinculado a empresas.",
+    "notAffiliate": "No eres afiliado de ninguna empresa en este momento.",
+    "linkedCompanies": "Empresas Vinculadas",
+    "totalEarnings": "Total Recibido",
+    "pendingEarnings": "Pendiente",
+    "totalTransactions": "Total de Transacciones",
+    "commissionHistory": "Historial de Comisiones",
+    "noCommissions": "Ninguna comisión registrada aún.",
+    "company": "Empresa",
+    "period": "Período",
+    "rate": "Tasa",
+    "amount": "Monto"
+  },
+  "landing": {
+    "login": "Iniciar Sesión",
+    "createAccount": "Crear Cuenta Gratis",
+    "heroSubtitle": "Plataforma completa de gestión para servicios marítimos. Catálogo de productos, órdenes de servicio, facturas y más.",
+    "freeTrialBadge": "Gratis por 2 meses — sin tarjeta de crédito",
+    "startFree": "Comenzar Gratis",
+    "seePricing": "Ver Precios",
+    "featuresTitle": "Todo lo que necesitas en un solo lugar",
+    "featuresSubtitle": "Gestiona toda la operación de tu empresa marítima con herramientas profesionales e integradas.",
+    "features": {
+      "products": {
+        "title": "Catálogo de Productos",
+        "description": "Gestiona productos con SKU, precios en múltiples monedas, categorías y atributos personalizados."
+      },
+      "invoices": {
+        "title": "Facturas",
+        "description": "Crea y emite facturas con validación automática e integración con NFS-e."
+      },
+      "serviceOrders": {
+        "title": "Órdenes de Servicio",
+        "description": "Controla órdenes de servicio marítimo con períodos diurno, nocturno y fin de semana."
+      },
+      "nfse": {
+        "title": "NFS-e Integrada",
+        "description": "Emisión automática de factura electrónica de servicio directamente desde el sistema."
+      },
+      "multiTenant": {
+        "title": "Multi-Empresa",
+        "description": "Cada empresa tiene su ambiente aislado con datos, usuarios y configuraciones propias."
+      },
+      "reports": {
+        "title": "Informes y Panel",
+        "description": "Visualiza métricas de ventas, productos, categorías y auditoría en tiempo real."
+      }
+    },
+    "pricingTitle": "Precios simples y transparentes",
+    "pricingSubtitle": "Comienza gratis, paga solo cuando estés listo. Sin sorpresas.",
+    "pricing": {
+      "perMonth": "mes",
+      "trial": {
+        "label": "Prueba Gratis",
+        "price": "$0",
+        "period": "Por 2 meses",
+        "feature1": "Acceso completo a todas las funcionalidades",
+        "feature2": "Usuarios ilimitados",
+        "feature3": "Sin tarjeta de crédito necesaria"
+      },
+      "discount": {
+        "badge": "Más Popular",
+        "label": "50% de Descuento",
+        "period": "Por 6 meses después de la prueba",
+        "feature1": "Todo del plan gratuito",
+        "feature2": "Soporte prioritario",
+        "feature3": "Cupones de descuento aplicables"
+      },
+      "full": {
+        "label": "Plan Completo",
+        "period": "Después del período de descuento",
+        "feature1": "Acceso completo permanente",
+        "feature2": "Soporte dedicado",
+        "feature3": "Nuevas funcionalidades incluidas"
+      }
+    },
+    "couponHint": "¿Tienes un cupón de descuento? Puedes aplicarlo durante el registro.",
+    "ctaTitle": "¿Listo para transformar tu gestión marítima?",
+    "ctaSubtitle": "Únete a las empresas que ya están ahorrando tiempo y dinero con FlexCatalog.",
+    "allRightsReserved": "Todos los derechos reservados.",
+    "register": {
+      "companyName": "Nombre de la Empresa",
+      "taxId": "ID Fiscal (CPF o CNPJ)",
+      "taxIdPlaceholder": "000.000.000-00 o 00.000.000/0001-00",
+      "couponCode": "Cupón de Descuento",
+      "couponCodePlaceholder": "Ingresa tu cupón (opcional)",
+      "couponApplied": "Cupón aplicado: {discount}% de descuento por {months} meses",
+      "couponInvalid": "Cupón inválido o expirado",
+      "applyCoupon": "Aplicar",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "loginLink": "Inicia sesión",
+      "termsAgree": "Al registrarte, aceptas nuestros términos de servicio."
+    },
+    "verifyEmail": {
+      "verifying": "Verificando tu correo electrónico...",
+      "successTitle": "Correo Verificado!",
+      "successMessage": "Tu correo electrónico ha sido verificado exitosamente. Ya puedes iniciar sesión.",
+      "errorTitle": "Error de Verificación",
+      "failed": "No se pudo verificar el correo electrónico. El enlace puede haber expirado.",
+      "noToken": "Token de verificación no encontrado.",
+      "goToLogin": "Ir a Iniciar Sesión"
+    }
   }
 }

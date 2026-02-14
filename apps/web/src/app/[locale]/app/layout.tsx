@@ -53,9 +53,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <nav className="bg-blue-600 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
           <Link href="/app" className="text-xl font-bold">
-            Product Catalog
+            FlexCatalog
           </Link>
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-4 items-center text-sm">
             <Link href="/app/products">{t('products.title')}</Link>
             <Link href="/app/categories">{t('categories.title')}</Link>
             <Link href="/app/invoices">{t('invoices.title')}</Link>
@@ -63,6 +63,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Link href="/app/users">{t('users.title')}</Link>
             <Link href="/app/audit">{t('nav.audit')}</Link>
             <Link href="/app/billing">{t('billing.title')}</Link>
+            <Link href="/app/support">{t('support.title')}</Link>
+            <Link href="/app/affiliates">{t('affiliate.title')}</Link>
+            {user?.roles?.includes('PLATFORM_ADMIN') && (
+              <Link href="/app/admin" className="text-yellow-300 font-semibold">
+                Admin
+              </Link>
+            )}
             <button onClick={handleLogout} className="ml-4">
               {t('auth.logout')}
             </button>

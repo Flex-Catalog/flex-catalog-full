@@ -9,6 +9,8 @@ interface CreateUserInput {
   name: string;
   passwordHash: string;
   roles: Role[];
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
 }
 
 @Injectable()
@@ -23,6 +25,8 @@ export class UsersService {
         name: input.name,
         passwordHash: input.passwordHash,
         roles: input.roles,
+        emailVerificationToken: input.emailVerificationToken,
+        emailVerificationExpires: input.emailVerificationExpires,
       },
     });
   }

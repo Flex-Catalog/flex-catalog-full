@@ -58,4 +58,21 @@ export class AuthController {
   async getMe(@CurrentUser() user: any) {
     return user;
   }
+
+  @Post('verify-email')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email address with token' })
+  async verifyEmail(@Body('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('resend-verification')
+  @SkipTenantCheck()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend verification email' })
+  async resendVerification(@CurrentUser('id') userId: string) {
+    await this.authService.resendVerification(userId);
+    return { message: 'Verification email sent' };
+  }
 }
