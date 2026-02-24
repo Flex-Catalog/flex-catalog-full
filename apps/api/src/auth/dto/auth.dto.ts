@@ -26,9 +26,10 @@ export class RegisterDto {
   @IsOptional()
   companyName?: string;
 
-  @ApiProperty({ example: 'US' })
+  @ApiProperty({ example: 'US', required: false })
   @IsString()
-  country: string;
+  @IsOptional()
+  country?: string;
 
   @ApiProperty({ example: 'en', required: false })
   @IsString()
