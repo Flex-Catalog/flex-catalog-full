@@ -53,6 +53,7 @@ export class AuthController {
   }
 
   @Get('me')
+  @SkipTenantCheck()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user info' })
   async getMe(@CurrentUser() user: any) {

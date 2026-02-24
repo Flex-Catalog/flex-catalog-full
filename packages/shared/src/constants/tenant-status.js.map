@@ -1,0 +1,1 @@
+{"version":3,"file":"tenant-status.js","sourceRoot":"","sources":["tenant-status.ts"],"names":[],"mappings":";;;AAAa,QAAA,aAAa,GAAG;IAC3B,eAAe,EAAE,iBAAiB;IAClC,KAAK,EAAE,OAAO;IACd,MAAM,EAAE,QAAQ;IAChB,QAAQ,EAAE,UAAU;IACpB,QAAQ,EAAE,UAAU;CACZ,CAAC;AAIE,QAAA,eAAe,GAAmB,CAAC,QAAQ,EAAE,OAAO,CAAC,CAAC;AACtD,QAAA,gBAAgB,GAAmB,CAAC,iBAAiB,EAAE,UAAU,EAAE,UAAU,CAAC,CAAC"}

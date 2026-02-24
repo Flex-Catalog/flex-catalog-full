@@ -11,7 +11,7 @@ interface Ticket {
   status: string;
   priority: string;
   createdAt: string;
-  messages: { content: string }[];
+  messages: { id: string; content: string; senderId: string; senderName: string; isAdmin: boolean; createdAt: string }[];
 }
 
 interface Message {
@@ -54,7 +54,7 @@ export default function SupportPage() {
 
   const loadTickets = () => {
     api.get('/support/tickets')
-      .then((res) => setTickets(res.data.data))
+      .then((res) => setTickets(Array.isArray(res.data) ? res.data : res.data?.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   };

@@ -4,58 +4,29 @@ import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-interface DashboardData {
-  products: {
-    total: number;
-    active: number;
-    inactive: number;
-  };
-  categories: {
-    total: number;
-  };
-  invoices: {
-    total: number;
-    issued: number;
-    pending: number;
-    totalRevenue: number;
-  };
-  users: {
-    total: number;
-    active: number;
-  };
-}
-
 export default function ReportsPage() {
   const t = useTranslations();
 
   const { data: dashboard, isLoading: loadingDashboard } = useQuery({
-    queryKey: ['reports', 'dashboard'],
+    queryKey: ['dashboard'],
     queryFn: async () => {
-      const res = await api.get('/reports/dashboard');
+      const res = await api.get('/dashboard');
       return res.data;
     },
   });
 
   const { data: productsReport } = useQuery({
-    queryKey: ['reports', 'products'],
+    queryKey: ['dashboard', 'products'],
     queryFn: async () => {
-      const res = await api.get('/reports/products');
+      const res = await api.get('/dashboard/products');
       return res.data;
     },
   });
 
-  const { data: salesReport } = useQuery({
-    queryKey: ['reports', 'sales'],
+  const { data: invoicesReport } = useQuery({
+    queryKey: ['dashboard', 'invoices'],
     queryFn: async () => {
-      const res = await api.get('/reports/sales');
-      return res.data;
-    },
-  });
-
-  const { data: categoriesReport } = useQuery({
-    queryKey: ['reports', 'categories'],
-    queryFn: async () => {
-      const res = await api.get('/reports/categories');
+      const res = await api.get('/dashboard/invoices');
       return res.data;
     },
   });
@@ -64,11 +35,11 @@ export default function ReportsPage() {
     return <div>{t('common.loading')}</div>;
   }
 
-  const data: DashboardData = dashboard?.data || {
+  const data = dashboard || {
     products: { total: 0, active: 0, inactive: 0 },
     categories: { total: 0 },
-    invoices: { total: 0, issued: 0, pending: 0, totalRevenue: 0 },
-    users: { total: 0, active: 0 },
+    invoices: { total: 0, issued: 0, pending: 0, draft: 0, failed: 0 },
+    revenue: { today: 0, week: 0, month: 0, currency: 'BRL' },
   };
 
   return (
@@ -105,7 +76,7 @@ export default function ReportsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-gray-500 text-sm font-medium uppercase">{t('reports.revenue')}</h3>
           <p className="text-3xl font-bold text-gray-900 mt-2">
-            ${(data.invoices.totalRevenue / 100).toFixed(2)}
+            ${(data.revenue.month / 100).toFixed(2)}
           </p>
         </div>
       </div>
@@ -116,13 +87,13 @@ export default function ReportsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">{t('reports.productsByCategory')}</h2>
           <div className="space-y-3">
-            {productsReport?.data?.byCategory?.map((item: any) => (
+            {productsReport?.byCategory?.map((item: any) => (
               <div key={item.categoryId || 'uncategorized'} className="flex justify-between items-center">
                 <span className="text-gray-700">{item.categoryName || t('reports.uncategorized')}</span>
                 <span className="font-semibold">{item.count}</span>
               </div>
             ))}
-            {(!productsReport?.data?.byCategory || productsReport.data.byCategory.length === 0) && (
+            {(!productsReport?.byCategory || productsReport.byCategory.length === 0) && (
               <p className="text-gray-500">{t('reports.noData')}</p>
             )}
           </div>
@@ -132,21 +103,21 @@ export default function ReportsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">{t('reports.salesByStatus')}</h2>
           <div className="space-y-3">
-            {salesReport?.data?.byStatus?.map((item: any) => (
-              <div key={item.status} className="flex justify-between items-center">
+            {invoicesReport?.byStatus && Object.entries(invoicesReport.byStatus).map(([status, count]: [string, any]) => (
+              <div key={status} className="flex justify-between items-center">
                 <span className="text-gray-700">
                   <span className={`inline-block w-3 h-3 rounded-full mr-2 ${
-                    item.status === 'ISSUED' ? 'bg-green-500' :
-                    item.status === 'PENDING' ? 'bg-yellow-500' :
-                    item.status === 'DRAFT' ? 'bg-gray-500' :
-                    item.status === 'FAILED' ? 'bg-red-500' : 'bg-gray-300'
+                    status === 'ISSUED' ? 'bg-green-500' :
+                    status === 'PENDING' ? 'bg-yellow-500' :
+                    status === 'DRAFT' ? 'bg-gray-500' :
+                    status === 'FAILED' ? 'bg-red-500' : 'bg-gray-300'
                   }`}></span>
-                  {item.status}
+                  {status}
                 </span>
-                <span className="font-semibold">{item.count}</span>
+                <span className="font-semibold">{count}</span>
               </div>
             ))}
-            {(!salesReport?.data?.byStatus || salesReport.data.byStatus.length === 0) && (
+            {(!invoicesReport?.byStatus || Object.keys(invoicesReport.byStatus).length === 0) && (
               <p className="text-gray-500">{t('reports.noData')}</p>
             )}
           </div>
@@ -156,16 +127,16 @@ export default function ReportsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">{t('reports.topCategories')}</h2>
           <div className="space-y-3">
-            {categoriesReport?.data?.topCategories?.slice(0, 5).map((item: any, index: number) => (
-              <div key={item.id} className="flex justify-between items-center">
+            {productsReport?.byCategory?.slice(0, 5).map((item: any, index: number) => (
+              <div key={item.categoryId || 'uncategorized'} className="flex justify-between items-center">
                 <span className="text-gray-700">
                   <span className="text-gray-400 mr-2">#{index + 1}</span>
-                  {item.name}
+                  {item.categoryName || t('reports.uncategorized')}
                 </span>
-                <span className="font-semibold">{item.productCount} {t('reports.products')}</span>
+                <span className="font-semibold">{item.count} {t('reports.products')}</span>
               </div>
             ))}
-            {(!categoriesReport?.data?.topCategories || categoriesReport.data.topCategories.length === 0) && (
+            {(!productsReport?.byCategory || productsReport.byCategory.length === 0) && (
               <p className="text-gray-500">{t('reports.noData')}</p>
             )}
           </div>
@@ -175,25 +146,20 @@ export default function ReportsPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">{t('reports.salesByCountry')}</h2>
           <div className="space-y-3">
-            {salesReport?.data?.byCountry?.map((item: any) => (
-              <div key={item.country} className="flex justify-between items-center">
+            {invoicesReport?.byCountry && Object.entries(invoicesReport.byCountry).map(([country, count]: [string, any]) => (
+              <div key={country} className="flex justify-between items-center">
                 <span className="text-gray-700">
                   <span className="mr-2">
-                    {item.country === 'BR' ? '🇧🇷' :
-                     item.country === 'US' ? '🇺🇸' :
-                     item.country === 'PT' ? '🇵🇹' : '🌍'}
+                    {country === 'BR' ? '\u{1F1E7}\u{1F1F7}' :
+                     country === 'US' ? '\u{1F1FA}\u{1F1F8}' :
+                     country === 'PT' ? '\u{1F1F5}\u{1F1F9}' : '\u{1F30D}'}
                   </span>
-                  {item.country}
+                  {country}
                 </span>
-                <div className="text-right">
-                  <span className="font-semibold">{item.count}</span>
-                  <span className="text-gray-400 ml-2">
-                    (${(item.revenue / 100).toFixed(2)})
-                  </span>
-                </div>
+                <span className="font-semibold">{count}</span>
               </div>
             ))}
-            {(!salesReport?.data?.byCountry || salesReport.data.byCountry.length === 0) && (
+            {(!invoicesReport?.byCountry || Object.keys(invoicesReport.byCountry).length === 0) && (
               <p className="text-gray-500">{t('reports.noData')}</p>
             )}
           </div>

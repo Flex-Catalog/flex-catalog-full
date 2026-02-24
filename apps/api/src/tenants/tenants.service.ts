@@ -80,4 +80,39 @@ export class TenantsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async getFiscalConfig(tenantId: string): Promise<Record<string, unknown> | null> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { fiscalConfig: true },
+    });
+    return (tenant?.fiscalConfig as Record<string, unknown>) ?? null;
+  }
+
+  async updateFiscalConfig(tenantId: string, config: Record<string, unknown>) {
+    return this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { fiscalConfig: config as any },
+      select: { fiscalConfig: true },
+    });
+  }
+
+  async getOrCreateSystemTenant() {
+    const SYSTEM_TENANT_NAME = '__SYSTEM_AFFILIATES__';
+    let tenant = await this.prisma.tenant.findFirst({
+      where: { name: SYSTEM_TENANT_NAME },
+    });
+    if (!tenant) {
+      tenant = await this.prisma.tenant.create({
+        data: {
+          name: SYSTEM_TENANT_NAME,
+          country: 'US',
+          locale: 'en',
+          features: [],
+          status: 'ACTIVE',
+        },
+      });
+    }
+    return tenant;
+  }
 }

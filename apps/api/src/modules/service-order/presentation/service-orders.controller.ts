@@ -1,3 +1,11 @@
+/**
+ * Remove apenas formatação de CPF/CNPJ (. - / espaços). Letras preservadas.
+ * CNPJ alfanumérico vigora a partir de julho/2026 (IN RFB nº 2229/2024).
+ */
+function stripFiscalId(value: string): string {
+  return value.replace(/[.\-\/\s]/g, '').toUpperCase();
+}
+
 import {
   Controller,
   Get,
@@ -13,6 +21,7 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
+  Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
@@ -33,6 +42,8 @@ import {
   ServiceOrderQueryOptions,
 } from '../infrastructure/persistence/service-order.repository';
 import { PdfGeneratorService } from '../infrastructure/documents/pdf-generator.service';
+import { FocusNfeService, FiscalConfig } from '../infrastructure/fiscal/focus-nfe.service';
+import { PrismaService } from '../../../prisma/prisma.service';
 
 /**
  * Create Service Order DTO
@@ -69,12 +80,16 @@ interface CreateServiceOrderDto {
 @ApiBearerAuth()
 @Controller('service-orders')
 export class ServiceOrdersController {
+  private readonly logger = new Logger(ServiceOrdersController.name);
+
   constructor(
     @Inject(SERVICE_ORDER_REPOSITORY)
     private readonly repository: IServiceOrderRepository,
     @Inject(EVENT_BUS)
     private readonly eventBus: IEventBus,
     private readonly pdfGenerator: PdfGeneratorService,
+    private readonly focusNfeService: FocusNfeService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -263,33 +278,177 @@ export class ServiceOrdersController {
     if (findResult.isFailure) throw new NotFoundException('Service order not found');
 
     const data = findResult.value.toDocumentData();
-    const html = this.pdfGenerator.generateServiceReceiptHtml(data);
+
+    // Load tenant fiscal config for the receipt header
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: { name: true, taxId: true, fiscalConfig: true },
+    });
+    const fiscal = (tenant?.fiscalConfig ?? {}) as FiscalConfig;
+    const issuerData = {
+      name: fiscal.razaoSocial || tenant?.name || 'Empresa Prestadora de Serviços',
+      taxId: tenant?.taxId || '—',
+      municipalRegistration: fiscal.inscricaoMunicipal || '—',
+      address: [
+        fiscal.logradouro,
+        fiscal.numero ? `nº ${fiscal.numero}` : null,
+        fiscal.bairro,
+        fiscal.municipio,
+        fiscal.uf,
+        fiscal.cep,
+      ]
+        .filter(Boolean)
+        .join(', ') || '—',
+    };
+
+    const html = this.pdfGenerator.generateServiceReceiptHtml({ ...data, issuerData });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   }
 
   /**
-   * Generate NFS-e (Nota Fiscal de Servico)
+   * Generate or retrieve NFS-e (Nota Fiscal de Serviço Eletrônica)
+   *
+   * Flow:
+   * 1. If tenant has Focus NFe configured AND nfseData not yet stored → emit via Focus NFe API
+   * 2. If Focus NFe is authorized → store result, return HTML with official NFS-e data
+   * 3. If no Focus NFe token → return local HTML with company data (not officially submitted)
    */
   @Get(':id/nfse')
   @RequirePermissions('INVOICE_READ')
-  @ApiOperation({ summary: 'Get NFS-e (HTML for print/PDF)' })
+  @ApiOperation({ summary: 'Get NFS-e (HTML for print/PDF) or emit via Focus NFe' })
   async getNfse(@CurrentUser() user: any, @Param('id') id: string, @Res() res: Response) {
     const findResult = await this.repository.findById(id, user.tenantId);
     if (findResult.isFailure) throw new NotFoundException('Service order not found');
 
     const data = findResult.value.toDocumentData();
 
-    // TODO: Get issuer data from tenant config
+    // Load tenant fiscal config
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: user.tenantId },
+      select: { name: true, taxId: true, fiscalConfig: true },
+    });
+    const fiscal = (tenant?.fiscalConfig ?? {}) as FiscalConfig;
+
+    // Build issuer data from tenant fiscal config
     const issuerData = {
-      name: 'Empresa Prestadora de Servicos',
-      taxId: '00.000.000/0000-00',
-      municipalRegistration: '000000',
-      address: 'Endereco da empresa',
+      name: fiscal.razaoSocial || tenant?.name || 'Empresa Prestadora de Serviços',
+      taxId: tenant?.taxId || '—',
+      municipalRegistration: fiscal.inscricaoMunicipal || '—',
+      address: [
+        fiscal.logradouro,
+        fiscal.numero ? `nº ${fiscal.numero}` : null,
+        fiscal.bairro,
+        fiscal.municipio,
+        fiscal.uf,
+        fiscal.cep,
+      ]
+        .filter(Boolean)
+        .join(', ') || '—',
     };
 
-    const html = this.pdfGenerator.generateNfseHtml(data, issuerData);
+    // Check if NFS-e was already issued (stored in nfseData field)
+    let nfseInfo: Record<string, unknown> | null = (data as any).nfseData ?? null;
+    let nfseWarning: string | null = null;
+
+    // If Focus NFe is configured and NFS-e not yet issued → emit now
+    if (
+      !nfseInfo &&
+      fiscal.focusNfeToken &&
+      fiscal.inscricaoMunicipal &&
+      fiscal.codigoMunicipio &&
+      tenant?.taxId
+    ) {
+      this.logger.log(`Emitindo NFS-e via Focus NFe para OS ${data.orderNumber}`);
+
+      const itemListaServico = fiscal.itemListaServico || '17.01'; // default: transporte
+      const aliquotaISS = fiscal.aliquotaISS ?? 5.0;
+      const ambiente = fiscal.ambiente || 'homologacao';
+      const totalCents = (data as any).totalCents as number;
+      const totalReais = totalCents / 100;
+
+      // Build tomador (client) from service order data
+      const companyTaxId = (data as any).companyTaxId as string | undefined;
+      const tomador: any = {
+        razaoSocial: (data as any).companyName as string,
+      };
+      if (companyTaxId) {
+        const normalized = stripFiscalId(companyTaxId);
+        if (normalized.length === 14) tomador.cnpj = normalized;
+        else if (normalized.length === 11) tomador.cpf = normalized;
+      }
+
+      // Discriminação composta com informações do serviço
+      const discriminacao = [
+        `Serviço: ${(data as any).serviceTypeLabel}`,
+        `Descrição: ${(data as any).serviceDescription}`,
+        `Embarcação: ${(data as any).vesselName} (${(data as any).vesselTypeLabel})`,
+        `Data: ${new Date((data as any).serviceDate as string).toLocaleDateString('pt-BR')}`,
+        (data as any).anchorageArea ? `Área de Fundeio: ${(data as any).anchorageArea}` : null,
+        (data as any).voucherNumber ? `Voucher: ${(data as any).voucherNumber}` : null,
+        (data as any).notes ? `Obs: ${(data as any).notes}` : null,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
+      const result = await this.focusNfeService.emitirNfse({
+        token: fiscal.focusNfeToken,
+        ambiente,
+        ref: `OS-${(data as any).orderNumber}`,
+        dataEmissao: new Date((data as any).serviceDate as string)
+          .toISOString()
+          .split('T')[0],
+        prestador: {
+          cnpj: stripFiscalId(tenant.taxId),
+          inscricaoMunicipal: fiscal.inscricaoMunicipal,
+          codigoMunicipio: fiscal.codigoMunicipio,
+        },
+        tomador,
+        servico: {
+          valorServicos: totalReais,
+          issrfRetido: false,
+          itemListaServico,
+          discriminacao,
+          codigoMunicipio: fiscal.codigoMunicipio,
+          aliquota: aliquotaISS,
+          codigoTributacaoMunicipal: fiscal.codigoTributacaoMunicipal,
+        },
+      });
+
+      if (result.success && result.data) {
+        nfseInfo = {
+          numero: result.data.numero,
+          codigoVerificacao: result.data.codigoVerificacao,
+          pdfUrl: result.data.pdfUrl,
+          xmlBase64: result.data.xmlBase64,
+          status: result.data.status,
+          ref: result.data.ref,
+          ambiente,
+          issuedAt: new Date().toISOString(),
+        };
+
+        // Persist nfseData in the ServiceOrder document (MongoDB - schemaless)
+        await this.prisma.serviceOrder.update({
+          where: { id: id },
+          data: { nfseData: nfseInfo } as any,
+        });
+      } else {
+        nfseWarning = result.error || 'Não foi possível emitir a NFS-e via Focus NFe.';
+        this.logger.warn(`NFS-e não emitida: ${nfseWarning}`);
+      }
+    } else if (!fiscal.focusNfeToken) {
+      nfseWarning =
+        'Configuração fiscal não encontrada. Configure o token Focus NFe em Configurações → Fiscal para emitir NFS-e oficialmente.';
+    }
+
+    // If Focus NFe returned a PDF URL and NFS-e is authorized → redirect to official PDF
+    if (nfseInfo?.pdfUrl && (nfseInfo as any).status === 'autorizado') {
+      return res.redirect(nfseInfo.pdfUrl as string);
+    }
+
+    // Generate local HTML (with official data if available)
+    const html = this.pdfGenerator.generateNfseHtml(data, issuerData, nfseInfo, nfseWarning);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);

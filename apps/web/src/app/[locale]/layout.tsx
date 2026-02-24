@@ -3,6 +3,12 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n/config';
 import { Providers } from './providers';
+import '../globals.css';
+
+export const metadata = {
+  title: 'FlexCatalog',
+  description: 'Plataforma completa de gestao maritima',
+};
 
 export default async function LocaleLayout({
   children,
@@ -19,7 +25,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body>
+      <body className="bg-white text-gray-900">
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

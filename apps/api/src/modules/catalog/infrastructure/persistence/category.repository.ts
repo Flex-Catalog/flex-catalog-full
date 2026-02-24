@@ -85,9 +85,9 @@ export class PrismaCategoryRepository implements ICategoryRepository {
       where: { id: category.id },
       create: data as any,
       update: {
-        name: data.name,
+        name: data.name as string,
         parentId: data.parentId as any,
-        updatedById: data.updatedById,
+        updatedById: data.updatedById as string,
         updatedAt: new Date(),
       },
     });

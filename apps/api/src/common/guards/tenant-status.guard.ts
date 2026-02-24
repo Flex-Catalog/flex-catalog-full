@@ -35,6 +35,11 @@ export class TenantStatusGuard implements CanActivate {
       return true; // Let JwtAuthGuard handle this
     }
 
+    // Affiliates use a system tenant - skip subscription check
+    if (user.roles && (user.roles as string[]).includes('AFFILIATE')) {
+      return true;
+    }
+
     if (!ACTIVE_STATUSES.includes(user.tenantStatus as any)) {
       throw new ForbiddenException({
         code: 'SUBSCRIPTION_REQUIRED',

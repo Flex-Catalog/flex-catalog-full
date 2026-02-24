@@ -18,6 +18,7 @@ export const ROLES = {
   TENANT_ADMIN: 'TENANT_ADMIN',
   OPERATOR: 'OPERATOR',
   READER: 'READER',
+  AFFILIATE: 'AFFILIATE',
 } as const;
 
 export type Role = keyof typeof ROLES;
@@ -55,4 +56,5 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'CATEGORY_WRITE',
   ],
   READER: ['PRODUCT_READ', 'INVOICE_READ', 'CATEGORY_READ'],
+  AFFILIATE: [],
 };

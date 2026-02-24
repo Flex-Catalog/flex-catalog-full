@@ -19,6 +19,16 @@
     "page": "Página",
     "of": "de"
   },
+  "dashboard": {
+    "welcome": "Acesse rapidamente os recursos do sistema.",
+    "productsDesc": "Gerencie seu catálogo de produtos",
+    "categoriesDesc": "Organize por categorias",
+    "invoicesDesc": "Emita e gerencie notas fiscais",
+    "reportsDesc": "Visualize métricas e relatórios",
+    "supportDesc": "Abra e acompanhe chamados",
+    "affiliatesDesc": "Gerencie afiliados e comissões",
+    "serviceOrdersDesc": "Crie e gerencie ordens de serviço marítimo"
+  },
   "validation": {
     "required": "Campo obrigatório",
     "minLength": "Mínimo de {min} caracteres"
@@ -33,7 +43,11 @@
     "required": "Autenticação necessária",
     "forbidden": "Acesso negado",
     "invalidCredentials": "Credenciais inválidas",
-    "loginSuccess": "Login realizado com sucesso"
+    "loginSuccess": "Login realizado com sucesso",
+    "accountType": "Tipo de Conta",
+    "accountTypeCompany": "Empresa",
+    "accountTypeAffiliate": "Filiado",
+    "affiliateRegisterDesc": "Crie uma conta de filiado para indicar empresas e receber comissões. Sem custos."
   },
   "products": {
     "title": "Produtos",
@@ -86,7 +100,10 @@
     "addItem": "Adicionar Item",
     "itemDescription": "Descrição",
     "quantity": "Qtd",
-    "unitPrice": "Preço Unit."
+    "unitPrice": "Preço Unit.",
+    "naturezaOperacao": "Natureza da Operação",
+    "pickFromCatalog": "Adicionar produto do catálogo:",
+    "viewDetails": "Ver detalhes"
   },
   "billing": {
     "title": "Assinatura",
@@ -95,8 +112,33 @@
     "pending": "Pagamento pendente",
     "pastDue": "Pagamento em atraso",
     "canceled": "Assinatura cancelada",
+    "active": "Ativa",
+    "trial": "Teste",
     "manage": "Gerenciar Assinatura",
-    "portal": "Abrir Portal de Cobrança"
+    "portal": "Abrir Portal de Cobrança",
+    "perMonth": "mês",
+    "trialEnds": "Teste expira em",
+    "nextBilling": "Próxima cobrança",
+    "paymentMethod": "Método de pagamento",
+    "cardOnFile": "Cartão cadastrado",
+    "noCard": "Nenhum cartão cadastrado"
+  },
+  "paymentWall": {
+    "title": "Assinatura Necessária",
+    "pastDueMessage": "Seu pagamento está em atraso. Atualize seu método de pagamento para continuar usando o FlexCatalog.",
+    "canceledMessage": "Sua assinatura foi cancelada. Assine novamente para recuperar o acesso a todas as funcionalidades.",
+    "pendingMessage": "Complete seu pagamento para ativar sua conta FlexCatalog.",
+    "subscribe": "Assinar Agora — US$ 500/mês",
+    "processing": "Processando...",
+    "paymentFailed": "Pagamento falhou. Tente novamente.",
+    "setupError": "Não foi possível inicializar o pagamento. Tente novamente.",
+    "tryAgain": "Tentar novamente",
+    "perMonth": "mês",
+    "feature1": "Acesso completo a todas as funcionalidades",
+    "feature2": "Usuários e produtos ilimitados",
+    "feature3": "Suporte prioritário incluído",
+    "securedByStripe": "Pagamentos protegidos por Stripe",
+    "logoutLink": "Sair e usar outra conta"
   },
   "feature": {
     "disabled": "Funcionalidade desabilitada"
@@ -140,15 +182,78 @@
     "activate": "Ativar",
     "deactivate": "Desativar"
   },
+  "serviceOrders": {
+    "title": "Ordens de Serviço",
+    "list": "Lista de Ordens",
+    "create": "Nova Ordem",
+    "noOrders": "Nenhuma ordem de serviço encontrada",
+    "number": "Número",
+    "serviceType": "Tipo de Serviço",
+    "serviceDate": "Data",
+    "serviceDescription": "Descrição do Serviço",
+    "serviceDescriptionPlaceholder": "Descreva o serviço realizado...",
+    "startTime": "Início",
+    "vessel": "Embarcação",
+    "vesselType": "Tipo",
+    "anchorageArea": "Área de Fundeio",
+    "company": "Empresa",
+    "captain": "Comandante",
+    "employee": "Funcionário",
+    "rate": "Valor (R$)",
+    "notes": "Observações",
+    "start": "Iniciar",
+    "complete": "Concluir",
+    "receipt": "Recibo"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "products": "Produtos",
     "categories": "Categorias",
     "invoices": "Notas Fiscais",
+    "serviceOrders": "Ordens de Serviço",
     "reports": "Relatórios",
     "users": "Usuários",
     "billing": "Assinatura",
-    "audit": "Log de Auditoria"
+    "audit": "Log de Auditoria",
+    "settings": "Configurações"
+  },
+  "settings": {
+    "fiscalTitle": "Configuração Fiscal",
+    "fiscalDesc": "Configure os dados da sua empresa para emissão de NF-e e NFS-e via Focus NFe.",
+    "focusNfeInfo": "Integração com Focus NFe",
+    "focusNfeInfoDesc": "O FlexCatalog emite notas fiscais eletrônicas através da plataforma Focus NFe. Você precisa criar uma conta em focusnfe.com.br, fazer upload do seu certificado digital e obter o token de API.",
+    "focusNfeCredentials": "Credenciais Focus NFe",
+    "focusNfeToken": "Token da API Focus NFe",
+    "focusNfeTokenHelp": "Encontre seu token no painel Focus NFe → Minha Empresa → Token de Acesso",
+    "ambiente": "Ambiente",
+    "ambienteHomologacao": "Homologação (testes)",
+    "ambienteProducao": "Produção (real)",
+    "ambienteHelp": "Use Homologação para testes. Mude para Produção quando estiver pronto para emitir notas reais.",
+    "issuerData": "Dados do Emitente",
+    "razaoSocial": "Razão Social",
+    "nomeFantasia": "Nome Fantasia",
+    "regimeTributario": "Regime Tributário",
+    "inscricaoEstadual": "Inscrição Estadual",
+    "inscricaoMunicipal": "Inscrição Municipal",
+    "codigoMunicipio": "Código IBGE do Município",
+    "codigoMunicipioHelp": "Código IBGE de 7 dígitos. Consulte em ibge.gov.br",
+    "cnaeCode": "Código CNAE",
+    "issuerAddress": "Endereço do Emitente",
+    "logradouro": "Logradouro",
+    "numero": "Número",
+    "complemento": "Complemento",
+    "bairro": "Bairro",
+    "municipio": "Município",
+    "uf": "UF",
+    "cep": "CEP",
+    "nfseConfig": "Configuração NFS-e (Ordem de Serviço)",
+    "nfseConfigDesc": "Parâmetros específicos para emissão de NFS-e para serviços prestados (ordens de serviço marítimo).",
+    "itemListaServico": "Item Lista de Serviço (LC116)",
+    "itemListaServicoHelp": "Ex: 16.01 = Serviços de transporte de natureza municipal",
+    "aliquotaISS": "Alíquota ISS (%)",
+    "aliquotaISSHelp": "Alíquota do ISS cobrada pelo seu município (geralmente 2% a 5%)",
+    "codigoTributacaoMunicipal": "Código de Tributação Municipal",
+    "savedSuccess": "Configuração fiscal salva com sucesso!"
   },
   "audit": {
     "title": "Log de Auditoria",
@@ -253,7 +358,14 @@
     "company": "Empresa",
     "period": "Período",
     "rate": "Taxa",
-    "amount": "Valor"
+    "amount": "Valor",
+    "dashboardWelcome": "Acompanhe suas indicações e comissões.",
+    "dashboardTitle": "Painel do Filiado",
+    "myCompanies": "Minhas Empresas",
+    "recentCommissions": "Comissões Recentes",
+    "noCompanies": "Você ainda não está vinculado a nenhuma empresa.",
+    "viewAllCommissions": "Ver Todas as Comissões",
+    "cpfPlaceholder": "000.000.000-00"
   },
   "landing": {
     "login": "Entrar",

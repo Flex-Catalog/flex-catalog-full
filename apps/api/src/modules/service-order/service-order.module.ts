@@ -6,6 +6,7 @@ import {
   PrismaServiceOrderRepository,
 } from './infrastructure/persistence/service-order.repository';
 import { PdfGeneratorService } from './infrastructure/documents/pdf-generator.service';
+import { FocusNfeService } from './infrastructure/fiscal/focus-nfe.service';
 import { ServiceOrdersController } from './presentation/service-orders.controller';
 
 /**
@@ -22,7 +23,8 @@ import { ServiceOrdersController } from './presentation/service-orders.controlle
       useClass: PrismaServiceOrderRepository,
     },
     PdfGeneratorService,
+    FocusNfeService,
   ],
-  exports: [SERVICE_ORDER_REPOSITORY, PdfGeneratorService],
+  exports: [SERVICE_ORDER_REPOSITORY, PdfGeneratorService, FocusNfeService],
 })
 export class ServiceOrderModule {}

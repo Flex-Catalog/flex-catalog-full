@@ -242,6 +242,173 @@ export class BillingService {
     }
   }
 
+  /**
+   * Create a SetupIntent for Stripe Payment Elements.
+   * Used on the payment wall when trial expires or subscription is past due.
+   */
+  async createSetupIntent(tenantId: string, email: string): Promise<{ clientSecret: string }> {
+    const tenant = await this.tenantsService.findById(tenantId);
+    let customerId = tenant?.stripeCustomerId;
+
+    if (!customerId) {
+      const customer = await this.stripe.customers.create({
+        email,
+        metadata: { tenantId },
+      });
+      customerId = customer.id;
+      await this.tenantsService.updateStripeInfo(tenantId, { stripeCustomerId: customerId });
+    }
+
+    const setupIntent = await this.stripe.setupIntents.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      metadata: { tenantId },
+    });
+
+    return { clientSecret: setupIntent.client_secret! };
+  }
+
+  /**
+   * Create a subscription using a previously collected payment method (from SetupIntent).
+   * Used after the user completes payment on the payment wall.
+   */
+  async createSubscriptionFromSetup(
+    tenantId: string,
+    email: string,
+    options?: { stripeCouponId?: string },
+  ): Promise<{ subscriptionId: string; clientSecret?: string }> {
+    const tenant = await this.tenantsService.findById(tenantId);
+    let customerId = tenant?.stripeCustomerId;
+
+    if (!customerId) {
+      const customer = await this.stripe.customers.create({
+        email,
+        metadata: { tenantId },
+      });
+      customerId = customer.id;
+      await this.tenantsService.updateStripeInfo(tenantId, { stripeCustomerId: customerId });
+    }
+
+    // Get the customer's default payment method
+    const customer = await this.stripe.customers.retrieve(customerId) as Stripe.Customer;
+    const defaultPm = customer.invoice_settings?.default_payment_method;
+
+    // If no default PM, get the latest one
+    let paymentMethodId = defaultPm as string | undefined;
+    if (!paymentMethodId) {
+      const paymentMethods = await this.stripe.paymentMethods.list({
+        customer: customerId,
+        type: 'card',
+        limit: 1,
+      });
+      paymentMethodId = paymentMethods.data[0]?.id;
+    }
+
+    // Get or create a recurring price for the subscription
+    const priceId = await this.getOrCreatePrice();
+
+    const subscriptionParams: Stripe.SubscriptionCreateParams = {
+      customer: customerId,
+      items: [{ price: priceId }],
+      default_payment_method: paymentMethodId,
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+      metadata: { tenantId },
+    };
+
+    if (options?.stripeCouponId) {
+      subscriptionParams.discounts = [{ coupon: options.stripeCouponId }];
+    }
+
+    const subscription = await this.stripe.subscriptions.create(subscriptionParams);
+
+    // Update tenant with subscription info
+    await this.tenantsService.updateStripeInfo(tenantId, {
+      stripeSubscriptionId: subscription.id,
+      status: subscription.status === 'active' ? 'ACTIVE' : 'PENDING_PAYMENT',
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+    });
+
+    if (subscription.status === 'active') {
+      await this.tenantsService.updateStripeInfo(tenantId, { status: 'ACTIVE' });
+    }
+
+    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
+
+    return {
+      subscriptionId: subscription.id,
+      clientSecret: paymentIntent?.client_secret || undefined,
+    };
+  }
+
+  /**
+   * Get tenant's subscription status details for the payment wall.
+   */
+  async getSubscriptionStatus(tenantId: string): Promise<{
+    status: string;
+    trialEndsAt?: string;
+    currentPeriodEnd?: string;
+    hasPaymentMethod: boolean;
+  }> {
+    const tenant = await this.tenantsService.findById(tenantId);
+    if (!tenant) throw new Error('Tenant not found');
+
+    let hasPaymentMethod = false;
+    if (tenant.stripeCustomerId) {
+      const paymentMethods = await this.stripe.paymentMethods.list({
+        customer: tenant.stripeCustomerId,
+        type: 'card',
+        limit: 1,
+      });
+      hasPaymentMethod = paymentMethods.data.length > 0;
+    }
+
+    return {
+      status: tenant.status,
+      trialEndsAt: tenant.trialEndsAt?.toISOString(),
+      currentPeriodEnd: tenant.currentPeriodEnd?.toISOString(),
+      hasPaymentMethod,
+    };
+  }
+
+  /**
+   * Get or create a recurring monthly price for FlexCatalog Pro ($500/month).
+   */
+  private async getOrCreatePrice(): Promise<string> {
+    // Use configured price ID if available
+    if (this.priceId) {
+      return this.priceId;
+    }
+
+    // Search for existing price
+    const prices = await this.stripe.prices.list({
+      lookup_keys: ['flexcatalog_pro_monthly'],
+      limit: 1,
+    });
+
+    if (prices.data.length > 0) {
+      return prices.data[0].id;
+    }
+
+    // Create product and price
+    const product = await this.stripe.products.create({
+      name: 'FlexCatalog Pro',
+      description: 'Monthly subscription',
+    });
+
+    const price = await this.stripe.prices.create({
+      product: product.id,
+      unit_amount: 50000,
+      currency: 'usd',
+      recurring: { interval: 'month' },
+      lookup_key: 'flexcatalog_pro_monthly',
+    });
+
+    return price.id;
+  }
+
   constructEvent(payload: Buffer, signature: string): Stripe.Event {
     const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
     return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);

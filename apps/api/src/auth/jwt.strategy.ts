@@ -28,6 +28,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('User not found or inactive');
     }
 
+    // Auto-expire trial: if tenant is TRIAL and trialEndsAt has passed, mark as PAST_DUE
+    let tenantStatus = user.tenant.status;
+    if (
+      tenantStatus === 'TRIAL' &&
+      user.tenant.trialEndsAt &&
+      new Date(user.tenant.trialEndsAt) < new Date()
+    ) {
+      await this.prisma.tenant.update({
+        where: { id: user.tenantId },
+        data: { status: 'PAST_DUE' },
+      });
+      tenantStatus = 'PAST_DUE';
+    }
+
     const permissions = this.getPermissionsFromRoles(user.roles as Role[]);
 
     return {
@@ -37,7 +51,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       name: user.name,
       roles: user.roles as Role[],
       permissions,
-      tenantStatus: user.tenant.status as any,
+      tenantStatus: tenantStatus as any,
       tenantFeatures: user.tenant.features as Feature[],
     };
   }

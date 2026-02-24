@@ -19,6 +19,16 @@
     "page": "Page",
     "of": "of"
   },
+  "dashboard": {
+    "welcome": "Quickly access system features.",
+    "productsDesc": "Manage your product catalog",
+    "categoriesDesc": "Organize by categories",
+    "invoicesDesc": "Issue and manage invoices",
+    "reportsDesc": "View metrics and reports",
+    "supportDesc": "Open and track support tickets",
+    "affiliatesDesc": "Manage affiliates and commissions",
+    "serviceOrdersDesc": "Create and manage maritime service orders"
+  },
   "validation": {
     "required": "Required field",
     "minLength": "Minimum of {min} characters"
@@ -33,7 +43,11 @@
     "required": "Authentication required",
     "forbidden": "Access denied",
     "invalidCredentials": "Invalid credentials",
-    "loginSuccess": "Login successful"
+    "loginSuccess": "Login successful",
+    "accountType": "Account Type",
+    "accountTypeCompany": "Company",
+    "accountTypeAffiliate": "Affiliate",
+    "affiliateRegisterDesc": "Create an affiliate account to refer companies and earn commissions. No cost."
   },
   "products": {
     "title": "Products",
@@ -86,7 +100,10 @@
     "addItem": "Add Item",
     "itemDescription": "Description",
     "quantity": "Qty",
-    "unitPrice": "Unit Price"
+    "unitPrice": "Unit Price",
+    "naturezaOperacao": "Nature of Operation",
+    "pickFromCatalog": "Add product from catalog:",
+    "viewDetails": "View details"
   },
   "billing": {
     "title": "Subscription",
@@ -95,8 +112,33 @@
     "pending": "Payment pending",
     "pastDue": "Payment past due",
     "canceled": "Subscription canceled",
+    "active": "Active",
+    "trial": "Trial",
     "manage": "Manage Subscription",
-    "portal": "Open Billing Portal"
+    "portal": "Open Billing Portal",
+    "perMonth": "month",
+    "trialEnds": "Trial ends",
+    "nextBilling": "Next billing",
+    "paymentMethod": "Payment method",
+    "cardOnFile": "Card on file",
+    "noCard": "No card registered"
+  },
+  "paymentWall": {
+    "title": "Subscription Required",
+    "pastDueMessage": "Your payment is past due. Please update your payment method to continue using FlexCatalog.",
+    "canceledMessage": "Your subscription has been canceled. Subscribe again to regain access to all features.",
+    "pendingMessage": "Complete your payment to activate your FlexCatalog account.",
+    "subscribe": "Subscribe Now — $500/month",
+    "processing": "Processing...",
+    "paymentFailed": "Payment failed. Please try again.",
+    "setupError": "Could not initialize payment. Please try again.",
+    "tryAgain": "Try again",
+    "perMonth": "month",
+    "feature1": "Full access to all features",
+    "feature2": "Unlimited users and products",
+    "feature3": "Priority support included",
+    "securedByStripe": "Payments secured by Stripe",
+    "logoutLink": "Sign out and use a different account"
   },
   "feature": {
     "disabled": "Feature disabled"
@@ -140,15 +182,78 @@
     "activate": "Activate",
     "deactivate": "Deactivate"
   },
+  "serviceOrders": {
+    "title": "Service Orders",
+    "list": "Service Order List",
+    "create": "New Order",
+    "noOrders": "No service orders found",
+    "number": "Number",
+    "serviceType": "Service Type",
+    "serviceDate": "Date",
+    "serviceDescription": "Service Description",
+    "serviceDescriptionPlaceholder": "Describe the service performed...",
+    "startTime": "Start Time",
+    "vessel": "Vessel",
+    "vesselType": "Type",
+    "anchorageArea": "Anchorage Area",
+    "company": "Company",
+    "captain": "Captain",
+    "employee": "Employee",
+    "rate": "Rate",
+    "notes": "Notes",
+    "start": "Start",
+    "complete": "Complete",
+    "receipt": "Receipt"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "products": "Products",
     "categories": "Categories",
     "invoices": "Invoices",
+    "serviceOrders": "Service Orders",
     "reports": "Reports",
     "users": "Users",
     "billing": "Subscription",
-    "audit": "Audit Log"
+    "audit": "Audit Log",
+    "settings": "Settings"
+  },
+  "settings": {
+    "fiscalTitle": "Fiscal Settings",
+    "fiscalDesc": "Configure your company data for issuing NF-e and NFS-e invoices via Focus NFe.",
+    "focusNfeInfo": "Focus NFe Integration",
+    "focusNfeInfoDesc": "FlexCatalog issues electronic fiscal documents through the Focus NFe platform. You need to create an account at focusnfe.com.br, upload your digital certificate and obtain the API token.",
+    "focusNfeCredentials": "Focus NFe Credentials",
+    "focusNfeToken": "Focus NFe API Token",
+    "focusNfeTokenHelp": "Find your token in the Focus NFe panel → My Company → Access Token",
+    "ambiente": "Environment",
+    "ambienteHomologacao": "Staging (testing)",
+    "ambienteProducao": "Production (real)",
+    "ambienteHelp": "Use Staging for testing. Switch to Production when ready to issue real invoices.",
+    "issuerData": "Issuer Data",
+    "razaoSocial": "Legal Name",
+    "nomeFantasia": "Trade Name",
+    "regimeTributario": "Tax Regime",
+    "inscricaoEstadual": "State Registration",
+    "inscricaoMunicipal": "Municipal Registration",
+    "codigoMunicipio": "IBGE Municipality Code",
+    "codigoMunicipioHelp": "7-digit IBGE code. Look up at ibge.gov.br",
+    "cnaeCode": "CNAE Code",
+    "issuerAddress": "Issuer Address",
+    "logradouro": "Street",
+    "numero": "Number",
+    "complemento": "Complement",
+    "bairro": "District",
+    "municipio": "City",
+    "uf": "State",
+    "cep": "ZIP Code",
+    "nfseConfig": "NFS-e Settings (Service Orders)",
+    "nfseConfigDesc": "Specific parameters for issuing NFS-e for services rendered (maritime service orders).",
+    "itemListaServico": "Service List Item (LC116)",
+    "itemListaServicoHelp": "Ex: 16.01 = Local maritime transportation services",
+    "aliquotaISS": "ISS Rate (%)",
+    "aliquotaISSHelp": "ISS rate charged by your city (usually 2% to 5%)",
+    "codigoTributacaoMunicipal": "Municipal Taxation Code",
+    "savedSuccess": "Fiscal settings saved successfully!"
   },
   "audit": {
     "title": "Audit Log",
@@ -253,7 +358,14 @@
     "company": "Company",
     "period": "Period",
     "rate": "Rate",
-    "amount": "Amount"
+    "amount": "Amount",
+    "dashboardWelcome": "Track your referrals and commissions.",
+    "dashboardTitle": "Affiliate Dashboard",
+    "myCompanies": "My Companies",
+    "recentCommissions": "Recent Commissions",
+    "noCompanies": "You are not linked to any company yet.",
+    "viewAllCommissions": "View All Commissions",
+    "cpfPlaceholder": "000.000.000-00"
   },
   "landing": {
     "login": "Login",

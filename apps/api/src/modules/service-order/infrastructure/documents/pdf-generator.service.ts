@@ -139,8 +139,15 @@ ${data.notes ? `<div style="margin-top:10px"><strong>Observacoes:</strong> ${dat
 
   /**
    * Generates NFS-e (Nota Fiscal de Servico Eletronica) HTML
+   * @param nfseOfficialData - Official NFS-e data from Focus NFe (if issued)
+   * @param warning - Warning message if NFS-e was not officially issued
    */
-  generateNfseHtml(data: Record<string, unknown>, issuerData: Record<string, unknown>): string {
+  generateNfseHtml(
+    data: Record<string, unknown>,
+    issuerData: Record<string, unknown>,
+    nfseOfficialData?: Record<string, unknown> | null,
+    warning?: string | null,
+  ): string {
     return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -160,6 +167,9 @@ ${data.notes ? `<div style="margin-top:10px"><strong>Observacoes:</strong> ${dat
 </head>
 <body>
 
+${warning ? `<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin-bottom:10px;font-size:11px;border-radius:4px"><strong>Aviso:</strong> ${warning}</div>` : ''}
+${nfseOfficialData ? `<div style="background:#d4edda;border:1px solid #28a745;padding:8px;margin-bottom:10px;font-size:10px;border-radius:4px"><strong>NFS-e Autorizada</strong> · Número: ${nfseOfficialData.numero ?? '—'} · Cód. Verificação: ${nfseOfficialData.codigoVerificacao ?? '—'} · Emitida em: ${nfseOfficialData.issuedAt ? new Date(nfseOfficialData.issuedAt as string).toLocaleString('pt-BR') : '—'}</div>` : ''}
+
 <div class="nfse-title">NOTA FISCAL DE SERVICOS ELETRONICA - NFS-e</div>
 
 <table>
@@ -167,13 +177,13 @@ ${data.notes ? `<div style="margin-top:10px"><strong>Observacoes:</strong> ${dat
     <td rowspan="3" style="width:60%">
       <span class="label">PRESTADOR DE SERVICOS</span><br>
       <span class="value">${issuerData.name ?? 'Empresa'}</span><br>
-      <span class="label">CNPJ: ${issuerData.taxId ?? ''}</span><br>
-      <span class="label">Inscricao Municipal: ${issuerData.municipalRegistration ?? ''}</span><br>
-      <span class="label">${issuerData.address ?? ''}</span>
+      <span class="label">CNPJ: ${issuerData.taxId ?? '—'}</span><br>
+      <span class="label">Inscricao Municipal: ${issuerData.municipalRegistration ?? '—'}</span><br>
+      <span class="label">${issuerData.address ?? '—'}</span>
     </td>
-    <td><span class="label">NUMERO DA NFS-e</span><br><span class="value">${data.orderNumber}</span></td>
+    <td><span class="label">NUMERO DA NFS-e</span><br><span class="value">${nfseOfficialData?.numero ?? data.orderNumber}</span></td>
   </tr>
-  <tr><td><span class="label">DATA EMISSAO</span><br><span class="value">${new Date().toLocaleDateString('pt-BR')}</span></td></tr>
+  <tr><td><span class="label">DATA EMISSAO</span><br><span class="value">${nfseOfficialData?.issuedAt ? new Date(nfseOfficialData.issuedAt as string).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}</span></td></tr>
   <tr><td><span class="label">COMPETENCIA</span><br><span class="value">${new Date().toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })}</span></td></tr>
 </table>
 

@@ -32,4 +32,28 @@ export class BillingController {
     const url = await this.billingService.createPortalSession(user.tenantId);
     return { url };
   }
+
+  @Post('setup-intent')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'Create Stripe SetupIntent for Payment Elements' })
+  async createSetupIntent(@CurrentUser() user: AuthUser) {
+    return this.billingService.createSetupIntent(user.tenantId, user.email);
+  }
+
+  @Post('subscribe')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'Create subscription after payment method setup' })
+  async createSubscription(@CurrentUser() user: AuthUser) {
+    return this.billingService.createSubscriptionFromSetup(
+      user.tenantId,
+      user.email,
+    );
+  }
+
+  @Get('status')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'Get subscription status for payment wall' })
+  async getStatus(@CurrentUser() user: AuthUser) {
+    return this.billingService.getSubscriptionStatus(user.tenantId);
+  }
 }

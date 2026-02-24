@@ -24,6 +24,16 @@ class ApiClient {
       return config;
     });
 
+    // Unwrap API response wrapper { success: true, data: ... }
+    this.client.interceptors.response.use(
+      (response) => {
+        if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+          response.data = response.data.data;
+        }
+        return response;
+      },
+    );
+
     // Handle token refresh on 401
     this.client.interceptors.response.use(
       (response) => response,
@@ -41,8 +51,13 @@ class ApiClient {
                 {},
                 { withCredentials: true },
               );
-              const { accessToken } = response.data;
+              // Raw axios call (not through our client), so unwrap manually
+              const refreshData = response.data.data || response.data;
+              const { accessToken } = refreshData;
               Cookies.set('accessToken', accessToken);
+              if (refreshData.refreshToken) {
+                Cookies.set('refreshToken', refreshData.refreshToken);
+              }
               originalRequest.headers.Authorization = `Bearer ${accessToken}`;
               return this.client(originalRequest);
             }

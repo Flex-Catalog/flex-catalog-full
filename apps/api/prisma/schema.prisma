@@ -19,6 +19,7 @@ model Tenant {
   stripeSubscriptionId String?
   currentPeriodEnd     DateTime?
   trialEndsAt          DateTime?
+  fiscalConfig         Json?     // { focusNfeToken, ambiente, razaoSocial, nomeFantasia, inscricaoEstadual, inscricaoMunicipal, codigoMunicipio, regimeTributario, itemListaServico, aliquotaISS, cnaeCode, logradouro, numero, complemento, bairro, municipio, uf, cep }
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -153,7 +154,6 @@ model Coupon {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@index([code])
   @@index([isActive])
 }
 
@@ -200,6 +200,10 @@ model ServiceOrder {
   totalCents             Int
 
   notes                  String?
+
+  // NFS-e data (stored after first issuance via Focus NFe)
+  nfseData               Json?    // { numero, codigoVerificacao, pdfUrl, xmlBase64, issuedAt, ref, ambiente }
+
   createdById            String   @db.ObjectId
   updatedById            String   @db.ObjectId
   createdAt              DateTime @default(now())
@@ -290,8 +294,6 @@ model Affiliate {
   tenantLinks   TenantAffiliate[]
   commissions   AffiliateCommission[]
 
-  @@index([email])
-  @@index([cpf])
   @@index([userId])
   @@index([inviteToken])
 }

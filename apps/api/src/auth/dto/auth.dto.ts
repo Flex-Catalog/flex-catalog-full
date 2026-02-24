@@ -15,9 +15,16 @@ class AffiliateIdentifierDto {
 }
 
 export class RegisterDto {
+  @ApiProperty({ example: 'company', required: false, description: 'Account type: company or affiliate' })
+  @IsString()
+  @IsOptional()
+  @IsIn(['company', 'affiliate'])
+  accountType?: 'company' | 'affiliate';
+
   @ApiProperty({ example: 'Acme Corp' })
   @IsString()
-  companyName: string;
+  @IsOptional()
+  companyName?: string;
 
   @ApiProperty({ example: 'US' })
   @IsString()
@@ -45,6 +52,11 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   taxId?: string;
+
+  @ApiProperty({ example: '123.456.789-00', required: false, description: 'CPF for affiliate accounts' })
+  @IsString()
+  @IsOptional()
+  cpf?: string;
 
   @ApiProperty({ example: 'WELCOME50', required: false })
   @IsString()

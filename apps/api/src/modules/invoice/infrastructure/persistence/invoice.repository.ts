@@ -73,11 +73,11 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
       where: { id: invoice.id },
       create: data as any,
       update: {
-        status: data.status,
+        status: data.status as string,
         result: data.result as any,
-        updatedById: data.updatedById,
-        issuedById: data.issuedById,
-        issuedAt: data.issuedAt,
+        updatedById: data.updatedById as string,
+        issuedById: data.issuedById as string,
+        issuedAt: data.issuedAt as Date,
         updatedAt: new Date(),
       },
     });

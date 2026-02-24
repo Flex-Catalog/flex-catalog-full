@@ -86,7 +86,7 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
       where: { id: order.id },
       create: data as any,
       update: {
-        status: data.status,
+        status: data.status as string,
         endTime: data.endTime as any,
         servicePeriod: data.servicePeriod as any,
         boatName: data.boatName as any,

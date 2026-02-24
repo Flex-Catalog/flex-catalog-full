@@ -41,6 +41,16 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
+    // ========== AFFILIATE REGISTRATION ==========
+    if (dto.accountType === 'affiliate') {
+      return this.registerAffiliate(dto);
+    }
+
+    // ========== COMPANY REGISTRATION (default) ==========
+    if (!dto.companyName) {
+      throw new BadRequestException('Company name is required');
+    }
+
     // Check Tax ID uniqueness
     if (dto.taxId) {
       const normalizedTaxId = dto.taxId.replace(/[.\-\/\s]/g, '');
@@ -194,6 +204,78 @@ export class AuthService {
     };
   }
 
+  private async registerAffiliate(dto: RegisterDto): Promise<AuthResponse> {
+    // Get or create system tenant for affiliate users
+    const systemTenant = await this.tenantsService.getOrCreateSystemTenant();
+
+    // Create user with AFFILIATE role
+    const passwordHash = await argon2.hash(dto.password);
+    const user = await this.usersService.create({
+      tenantId: systemTenant.id,
+      email: dto.email,
+      name: dto.name,
+      passwordHash,
+      roles: ['AFFILIATE'],
+    });
+
+    // Create or activate Affiliate record
+    const normalizedCpf = dto.cpf ? dto.cpf.replace(/[.\-\/\s]/g, '') : undefined;
+    const existingAffiliate = await this.prisma.affiliate.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existingAffiliate) {
+      // Affiliate was invited by a company - activate it
+      await this.prisma.affiliate.update({
+        where: { id: existingAffiliate.id },
+        data: {
+          status: 'ACTIVE',
+          userId: user.id,
+          name: dto.name,
+          cpf: normalizedCpf || existingAffiliate.cpf,
+        },
+      });
+    } else {
+      // New affiliate registration
+      await this.prisma.affiliate.create({
+        data: {
+          email: dto.email,
+          name: dto.name,
+          cpf: normalizedCpf,
+          status: 'ACTIVE',
+          userId: user.id,
+          type: 'STANDARD',
+        },
+      });
+    }
+
+    // Generate tokens (no checkout URL for affiliates)
+    const tokens = await this.generateTokens({
+      sub: user.id,
+      tenantId: systemTenant.id,
+      email: user.email,
+      roles: user.roles as any[],
+    });
+
+    const refreshTokenHash = await argon2.hash(tokens.refreshToken);
+    await this.usersService.updateRefreshToken(user.id, refreshTokenHash);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roles: user.roles as any[],
+      },
+      tenant: {
+        id: systemTenant.id,
+        name: systemTenant.name,
+        status: systemTenant.status as any,
+      },
+      tokens,
+    };
+  }
+
   async login(dto: LoginDto): Promise<AuthResponse> {
     const user = await this.usersService.findByEmailGlobal(dto.email);
     if (!user) {
@@ -224,8 +306,10 @@ export class AuthService {
     const refreshTokenHash = await argon2.hash(tokens.refreshToken);
     await this.usersService.updateRefreshToken(user.id, refreshTokenHash);
 
+    // Skip checkout for affiliate users
+    const isAffiliate = (user.roles as string[]).includes('AFFILIATE');
     let checkoutUrl: string | undefined;
-    if (tenant.status === 'PENDING_PAYMENT') {
+    if (!isAffiliate && tenant.status === 'PENDING_PAYMENT') {
       checkoutUrl = await this.billingService.createCheckoutSession(
         tenant.id,
         user.email,
