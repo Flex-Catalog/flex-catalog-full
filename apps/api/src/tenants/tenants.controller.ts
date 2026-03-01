@@ -61,7 +61,7 @@ export class TenantsController {
   @UseInterceptors(FileInterceptor('arquivo'))
   async uploadCertificate(
     @CurrentUser() user: AuthUser,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: { buffer: Buffer; originalname?: string; mimetype?: string },
     @Body('senha') senha: string,
   ) {
     if (!file) throw new BadRequestException('Arquivo do certificado é obrigatório');
