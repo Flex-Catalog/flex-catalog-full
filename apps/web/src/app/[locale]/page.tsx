@@ -287,11 +287,11 @@ export default function LandingPage() {
                 </span>
               </div>
               <div className="mb-1">
-                <span className="text-5xl font-extrabold">R$250</span>
+                <span className="text-5xl font-extrabold">{t('pricing.discount.price')}</span>
                 <span className="text-lg text-blue-200">/{t('pricing.perMonth')}</span>
               </div>
               <div className="text-sm text-blue-200 mb-1">{t('pricing.discount.period')}</div>
-              <div className="text-sm text-blue-300 line-through mb-8">R$500/{t('pricing.perMonth')}</div>
+              <div className="text-sm text-blue-300 line-through mb-8">{t('pricing.full.price')}/{t('pricing.perMonth')}</div>
               <ul className="space-y-3 mb-8">
                 {['feature1', 'feature2', 'feature3'].map((f) => (
                   <li key={f} className="flex items-start gap-3 text-sm text-blue-50">
@@ -323,7 +323,7 @@ export default function LandingPage() {
                 </span>
               </div>
               <div className="mb-1">
-                <span className="text-5xl font-extrabold text-gray-900">R$500</span>
+                <span className="text-5xl font-extrabold text-gray-900">{t('pricing.full.price')}</span>
                 <span className="text-lg text-gray-500">/{t('pricing.perMonth')}</span>
               </div>
               <div className="text-sm text-gray-500 mb-8">{t('pricing.full.period')}</div>
