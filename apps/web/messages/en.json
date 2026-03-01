@@ -403,7 +403,7 @@
     "login": "Login",
     "createAccount": "Create Free Account",
     "heroSubtitle": "Complete management platform for maritime services. Product catalog, service orders, invoices and more.",
-    "freeTrialBadge": "Free for 2 months — no credit card required",
+    "freeTrialBadge": "Free for 2 months — cancel anytime",
     "startFree": "Start Free",
     "seePricing": "See Pricing",
     "featuresTitle": "Everything you need in one place",
@@ -444,7 +444,7 @@
         "period": "For 2 months",
         "feature1": "Full access to all features",
         "feature2": "Unlimited users",
-        "feature3": "No credit card required"
+        "feature3": "Cancel anytime"
       },
       "discount": {
         "badge": "Most Popular",

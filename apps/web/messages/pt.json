@@ -403,7 +403,7 @@
     "login": "Entrar",
     "createAccount": "Criar Conta Grátis",
     "heroSubtitle": "Plataforma completa de gestão para serviços marítimos. Catálogo de produtos, ordens de serviço, notas fiscais e muito mais.",
-    "freeTrialBadge": "Grátis por 2 meses — sem cartão de crédito",
+    "freeTrialBadge": "Grátis por 2 meses — cancele quando quiser",
     "startFree": "Começar Grátis",
     "seePricing": "Ver Preços",
     "featuresTitle": "Tudo que você precisa em um só lugar",
@@ -444,7 +444,7 @@
         "period": "Por 2 meses",
         "feature1": "Acesso completo a todas as funcionalidades",
         "feature2": "Usuários ilimitados",
-        "feature3": "Sem cartão de crédito necessário"
+        "feature3": "Cancele quando quiser"
       },
       "discount": {
         "badge": "Mais Popular",
