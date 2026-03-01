@@ -75,7 +75,7 @@ export default function BillingPage() {
           </div>
 
           <div className="flex items-baseline gap-1 mb-4">
-            <span className="text-3xl font-bold text-gray-900">$500</span>
+            <span className="text-3xl font-bold text-gray-900">{t('price')}</span>
             <span className="text-gray-500">/{t('perMonth')}</span>
           </div>
 

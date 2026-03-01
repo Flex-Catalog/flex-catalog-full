@@ -15,11 +15,18 @@ class ApiClient {
       },
     });
 
-    // Add auth token to requests
+    // Add auth token and locale to requests
     this.client.interceptors.request.use((config) => {
       const token = Cookies.get('accessToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      // Send current locale so backend selects the correct currency/price
+      if (typeof window !== 'undefined') {
+        const locale = window.location.pathname.split('/')[1];
+        if (locale && ['pt', 'en', 'es'].includes(locale)) {
+          config.headers['X-Locale'] = locale;
+        }
       }
       return config;
     });

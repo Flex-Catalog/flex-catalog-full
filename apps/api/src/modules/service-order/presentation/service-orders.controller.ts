@@ -24,6 +24,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { CurrentUser, RequirePermissions } from '../../../common/decorators';
 import { createContext } from '../../../@core/application/use-case.interface';
@@ -90,6 +91,7 @@ export class ServiceOrdersController {
     private readonly pdfGenerator: PdfGeneratorService,
     private readonly focusNfeService: FocusNfeService,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Get()
@@ -352,10 +354,14 @@ export class ServiceOrdersController {
     let nfseInfo: Record<string, unknown> | null = (data as any).nfseData ?? null;
     let nfseWarning: string | null = null;
 
+    // Platform-level Focus NFe token (set by platform admin via env var)
+    const platformToken = this.configService.get<string>('FOCUS_NFE_TOKEN');
+    const platformAmbiente = this.configService.get<string>('FOCUS_NFE_AMBIENTE') ?? fiscal.ambiente ?? 'homologacao';
+
     // If Focus NFe is configured and NFS-e not yet issued → emit now
     if (
       !nfseInfo &&
-      fiscal.focusNfeToken &&
+      platformToken &&
       fiscal.inscricaoMunicipal &&
       fiscal.codigoMunicipio &&
       tenant?.taxId
@@ -364,7 +370,7 @@ export class ServiceOrdersController {
 
       const itemListaServico = fiscal.itemListaServico || '17.01'; // default: transporte
       const aliquotaISS = fiscal.aliquotaISS ?? 5.0;
-      const ambiente = fiscal.ambiente || 'homologacao';
+      const ambiente = platformAmbiente as 'homologacao' | 'producao';
       const totalCents = (data as any).totalCents as number;
       const totalReais = totalCents / 100;
 
@@ -393,7 +399,7 @@ export class ServiceOrdersController {
         .join(' | ');
 
       const result = await this.focusNfeService.emitirNfse({
-        token: fiscal.focusNfeToken,
+        token: platformToken,
         ambiente,
         ref: `OS-${(data as any).orderNumber}`,
         dataEmissao: new Date((data as any).serviceDate as string)
@@ -437,9 +443,9 @@ export class ServiceOrdersController {
         nfseWarning = result.error || 'Não foi possível emitir a NFS-e via Focus NFe.';
         this.logger.warn(`NFS-e não emitida: ${nfseWarning}`);
       }
-    } else if (!fiscal.focusNfeToken) {
+    } else if (!platformToken) {
       nfseWarning =
-        'Configuração fiscal não encontrada. Configure o token Focus NFe em Configurações → Fiscal para emitir NFS-e oficialmente.';
+        'A plataforma ainda não configurou a integração com Focus NFe. Entre em contato com o suporte.';
     }
 
     // If Focus NFe returned a PDF URL and NFS-e is authorized → redirect to official PDF

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 import {
@@ -15,7 +16,7 @@ import { ServiceOrdersController } from './presentation/service-orders.controlle
  * - Handles: creation, tracking, completion, receipt/invoice generation
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [ConfigModule, PrismaModule],
   controllers: [ServiceOrdersController],
   providers: [
     {

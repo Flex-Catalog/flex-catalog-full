@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as https from 'https';
+import { ConfigService } from '@nestjs/config';
 import { Result, ValidationError } from '../../../../@core/domain/result';
 import { IFiscalProvider, FiscalProviderResult } from '../../domain/services/fiscal-provider.interface';
 import { PrismaService } from '../../../../prisma/prisma.service';
@@ -18,7 +19,6 @@ function stripCep(value: string): string {
 }
 
 interface FiscalConfig {
-  focusNfeToken?: string;
   ambiente?: 'homologacao' | 'producao';
   razaoSocial?: string;
   nomeFantasia?: string;
@@ -53,7 +53,10 @@ export class BrazilFiscalProvider implements IFiscalProvider {
   private readonly logger = new Logger(BrazilFiscalProvider.name);
   private readonly supportedCountryCodes = ['BR', 'BRA', 'BRAZIL'] as const;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
   supportedCountries(): readonly string[] {
     return this.supportedCountryCodes;
@@ -113,9 +116,12 @@ export class BrazilFiscalProvider implements IFiscalProvider {
       });
       const fiscal = (tenant?.fiscalConfig ?? {}) as FiscalConfig;
 
+      // Use platform-level Focus NFe token (env var set by platform admin)
+      const platformToken = this.configService.get<string>('FOCUS_NFE_TOKEN');
+
       // Try real Focus NFe integration if configured
       if (
-        fiscal.focusNfeToken &&
+        platformToken &&
         tenant?.taxId &&
         fiscal.razaoSocial &&
         fiscal.inscricaoEstadual &&
@@ -125,13 +131,13 @@ export class BrazilFiscalProvider implements IFiscalProvider {
         fiscal.cep
       ) {
         this.logger.log(`Emitindo NF-e via Focus NFe para tenant ${tenantId}`);
-        const result = await this.callFocusNFeAPI(payload, tenant, fiscal);
+        const result = await this.callFocusNFeAPI(payload, tenant, fiscal, platformToken);
         return Result.ok(result);
       }
 
       // Fallback: improved mock with real tenant data
       this.logger.warn(
-        `NF-e em modo homologação local (sem token Focus NFe). Configure em Configurações → Fiscal.`,
+        `NF-e em modo homologação local (FOCUS_NFE_TOKEN não configurado).`,
       );
       const mockResult = await this.generateLocalMock(payload, tenant, fiscal);
       return Result.ok(mockResult);
@@ -151,9 +157,11 @@ export class BrazilFiscalProvider implements IFiscalProvider {
     payload: Record<string, unknown>,
     tenant: { taxId: string | null },
     fiscal: FiscalConfig,
+    token: string,
   ): Promise<FiscalProviderResult> {
     const cnpj = tenant.taxId ? stripFiscalId(tenant.taxId) : '';
-    const ambiente = fiscal.ambiente ?? 'homologacao';
+    const platformAmbiente = this.configService.get<string>('FOCUS_NFE_AMBIENTE');
+    const ambiente = platformAmbiente ?? fiscal.ambiente ?? 'homologacao';
     const hostname =
       ambiente === 'producao' ? 'api.focusnfe.com.br' : 'homologacao.focusnfe.com.br';
 
@@ -227,7 +235,7 @@ export class BrazilFiscalProvider implements IFiscalProvider {
     };
 
     try {
-      const response = await this.httpPost(hostname, `/v2/nfe?ref=${ref}`, fiscal.focusNfeToken!, nfePayload);
+      const response = await this.httpPost(hostname, `/v2/nfe?ref=${ref}`, token, nfePayload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         const body = response.body;

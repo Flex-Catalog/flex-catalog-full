@@ -7,7 +7,6 @@ import { AffiliateService } from '../modules/affiliate/affiliate.service';
 @Injectable()
 export class BillingService {
   private stripe: Stripe;
-  private readonly priceId: string;
   private readonly logger = new Logger(BillingService.name);
 
   constructor(
@@ -19,13 +18,25 @@ export class BillingService {
       this.configService.get<string>('STRIPE_SECRET_KEY') || '',
       { apiVersion: '2024-12-18.acacia' as any },
     );
-    this.priceId = this.configService.get<string>('STRIPE_PRICE_ID') || '';
+  }
+
+  /**
+   * Returns the Stripe price ID for the given locale.
+   * Locale 'pt' → BRL (R$ 2.500), 'es' → EUR (€ 470), default → USD ($500)
+   */
+  private getPriceIdByLocale(locale: string): string {
+    const localeMap: Record<string, string> = {
+      pt: this.configService.get<string>('STRIPE_PRICE_ID_BRL') || '',
+      es: this.configService.get<string>('STRIPE_PRICE_ID_EUR') || '',
+      en: this.configService.get<string>('STRIPE_PRICE_ID_USD') || '',
+    };
+    return localeMap[locale] || localeMap['en'] || '';
   }
 
   async createCheckoutSession(
     tenantId: string,
     email: string,
-    options?: { trialDays?: number; stripeCouponId?: string },
+    options?: { trialDays?: number; stripeCouponId?: string; locale?: string },
   ): Promise<string> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
 
@@ -42,25 +53,14 @@ export class BillingService {
       await this.tenantsService.updateStripeInfo(tenantId, { stripeCustomerId: customerId });
     }
 
+    const priceId = this.getPriceIdByLocale(options?.locale || 'en');
+
     // Build checkout session params
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'FlexCatalog Pro',
-              description: 'Monthly subscription',
-            },
-            unit_amount: 50000, // $500 in cents
-            recurring: { interval: 'month' },
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${frontendUrl}/app?checkout=success`,
       cancel_url: `${frontendUrl}/app?checkout=canceled`,
       metadata: { tenantId },
@@ -275,7 +275,7 @@ export class BillingService {
   async createSubscriptionFromSetup(
     tenantId: string,
     email: string,
-    options?: { stripeCouponId?: string },
+    options?: { stripeCouponId?: string; locale?: string },
   ): Promise<{ subscriptionId: string; clientSecret?: string }> {
     const tenant = await this.tenantsService.findById(tenantId);
     let customerId = tenant?.stripeCustomerId;
@@ -304,8 +304,8 @@ export class BillingService {
       paymentMethodId = paymentMethods.data[0]?.id;
     }
 
-    // Get or create a recurring price for the subscription
-    const priceId = await this.getOrCreatePrice();
+    // Get the price for the user's locale
+    const priceId = this.getPriceIdByLocale(options?.locale || 'en');
 
     const subscriptionParams: Stripe.SubscriptionCreateParams = {
       customer: customerId,
@@ -371,42 +371,6 @@ export class BillingService {
       currentPeriodEnd: tenant.currentPeriodEnd?.toISOString(),
       hasPaymentMethod,
     };
-  }
-
-  /**
-   * Get or create a recurring monthly price for FlexCatalog Pro ($500/month).
-   */
-  private async getOrCreatePrice(): Promise<string> {
-    // Use configured price ID if available
-    if (this.priceId) {
-      return this.priceId;
-    }
-
-    // Search for existing price
-    const prices = await this.stripe.prices.list({
-      lookup_keys: ['flexcatalog_pro_monthly'],
-      limit: 1,
-    });
-
-    if (prices.data.length > 0) {
-      return prices.data[0].id;
-    }
-
-    // Create product and price
-    const product = await this.stripe.products.create({
-      name: 'FlexCatalog Pro',
-      description: 'Monthly subscription',
-    });
-
-    const price = await this.stripe.prices.create({
-      product: product.id,
-      unit_amount: 50000,
-      currency: 'usd',
-      recurring: { interval: 'month' },
-      lookup_key: 'flexcatalog_pro_monthly',
-    });
-
-    return price.id;
   }
 
   constructEvent(payload: Buffer, signature: string): Stripe.Event {

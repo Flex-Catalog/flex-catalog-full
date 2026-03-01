@@ -4,11 +4,9 @@ import { useTranslations } from 'next-intl';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useForm } from 'react-hook-form';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface FiscalConfigForm {
-  focusNfeToken: string;
-  ambiente: 'homologacao' | 'producao';
   razaoSocial: string;
   nomeFantasia: string;
   inscricaoEstadual: string;
@@ -32,6 +30,11 @@ export default function FiscalSettingsPage() {
   const t = useTranslations();
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certPassword, setCertPassword] = useState('');
+  const [certSaved, setCertSaved] = useState(false);
+  const [certError, setCertError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { register, handleSubmit, reset } = useForm<FiscalConfigForm>();
 
@@ -46,8 +49,6 @@ export default function FiscalSettingsPage() {
   useEffect(() => {
     if (config) {
       reset({
-        focusNfeToken: config.focusNfeToken ?? '',
-        ambiente: config.ambiente ?? 'homologacao',
         razaoSocial: config.razaoSocial ?? '',
         nomeFantasia: config.nomeFantasia ?? '',
         inscricaoEstadual: config.inscricaoEstadual ?? '',
@@ -85,6 +86,39 @@ export default function FiscalSettingsPage() {
     },
   });
 
+  const { data: certStatus } = useQuery({
+    queryKey: ['cert-status'],
+    queryFn: async () => {
+      const res = await api.get('/tenants/fiscal-config/certificate');
+      return res.data as { uploaded: boolean; uploadedAt: string | null };
+    },
+  });
+
+  const certMutation = useMutation({
+    mutationFn: async () => {
+      if (!certFile) throw new Error('Selecione o arquivo .pfx');
+      const form = new FormData();
+      form.append('arquivo', certFile);
+      form.append('senha', certPassword);
+      const res = await api.post('/tenants/fiscal-config/certificate', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cert-status'] });
+      setCertSaved(true);
+      setCertFile(null);
+      setCertPassword('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setTimeout(() => setCertSaved(false), 4000);
+    },
+    onError: (err: any) => {
+      setCertError(err?.response?.data?.message || err?.message || t('common.error'));
+      setTimeout(() => setCertError(''), 5000);
+    },
+  });
+
   if (isLoading) {
     return <div className="text-gray-500">{t('common.loading')}</div>;
   }
@@ -96,18 +130,10 @@ export default function FiscalSettingsPage() {
         <p className="text-sm text-gray-500 mt-1">{t('settings.fiscalDesc')}</p>
       </div>
 
-      {/* Focus NFe Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm">
-        <p className="font-semibold text-blue-800 mb-1">{t('settings.focusNfeInfo')}</p>
-        <p className="text-blue-700">{t('settings.focusNfeInfoDesc')}</p>
-        <a
-          href="https://focusnfe.com.br"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline mt-1 inline-block"
-        >
-          focusnfe.com.br →
-        </a>
+      {/* Platform NFS-e Info Banner */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-sm">
+        <p className="font-semibold text-green-800 mb-1">{t('settings.platformNfseInfo')}</p>
+        <p className="text-green-700">{t('settings.platformNfseInfoDesc')}</p>
       </div>
 
       {saved && (
@@ -123,38 +149,6 @@ export default function FiscalSettingsPage() {
       )}
 
       <form onSubmit={handleSubmit((data) => saveMutation.mutate(data))} className="space-y-6">
-
-        {/* Focus NFe Credentials */}
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">{t('settings.focusNfeCredentials')}</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('settings.focusNfeToken')}
-              </label>
-              <input
-                {...register('focusNfeToken')}
-                type="password"
-                placeholder="Seu token da Focus NFe"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-              />
-              <p className="text-xs text-gray-400 mt-1">{t('settings.focusNfeTokenHelp')}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('settings.ambiente')}
-              </label>
-              <select
-                {...register('ambiente')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="homologacao">{t('settings.ambienteHomologacao')}</option>
-                <option value="producao">{t('settings.ambienteProducao')}</option>
-              </select>
-              <p className="text-xs text-gray-400 mt-1">{t('settings.ambienteHelp')}</p>
-            </div>
-          </div>
-        </div>
 
         {/* Dados do Emitente */}
         <div className="bg-white rounded-lg border border-gray-200 p-5">
@@ -374,6 +368,77 @@ export default function FiscalSettingsPage() {
           </button>
         </div>
       </form>
+
+      {/* Certificado Digital */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-base font-semibold text-gray-900">{t('settings.certTitle')}</h2>
+          {certStatus?.uploaded ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+              {t('settings.certConfigured')}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
+              {t('settings.certNotConfigured')}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mb-4">{t('settings.certDesc')}</p>
+
+        {certStatus?.uploaded && certStatus.uploadedAt && (
+          <p className="text-xs text-gray-400 mb-4">
+            {t('settings.certLastUpload')}: {new Date(certStatus.uploadedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
+
+        {certSaved && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-sm">
+            {t('settings.certUploadSuccess')}
+          </div>
+        )}
+        {certError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+            {certError}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('settings.certFile')}
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pfx,.p12"
+              onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('settings.certPassword')}
+            </label>
+            <input
+              type="password"
+              value={certPassword}
+              onChange={(e) => setCertPassword(e.target.value)}
+              placeholder="Senha do certificado .pfx"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="button"
+            disabled={certMutation.isPending || !certFile || !certPassword}
+            onClick={() => certMutation.mutate()}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
+          >
+            {certMutation.isPending ? t('settings.certUploading') : t('settings.certUpload')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

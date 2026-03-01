@@ -26,7 +26,6 @@ function stripCep(value: string): string {
  */
 
 export interface FiscalConfig {
-  focusNfeToken?: string;
   ambiente?: 'homologacao' | 'producao';
   razaoSocial?: string;
   nomeFantasia?: string;

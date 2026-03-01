@@ -1,4 +1,4 @@
-import { Controller, Post, Get } from '@nestjs/common';
+import { Controller, Post, Get, Headers } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { BillingService } from './billing.service';
 import { CurrentUser, RequirePermissions } from '../common/decorators';
@@ -17,10 +17,14 @@ export class BillingController {
   @Post('checkout')
   @SkipTenantCheck()
   @ApiOperation({ summary: 'Create Stripe Checkout session' })
-  async createCheckout(@CurrentUser() user: AuthUser) {
+  async createCheckout(
+    @CurrentUser() user: AuthUser,
+    @Headers('x-locale') locale: string,
+  ) {
     const url = await this.billingService.createCheckoutSession(
       user.tenantId,
       user.email,
+      { locale: locale || 'en' },
     );
     return { url };
   }
@@ -43,10 +47,14 @@ export class BillingController {
   @Post('subscribe')
   @SkipTenantCheck()
   @ApiOperation({ summary: 'Create subscription after payment method setup' })
-  async createSubscription(@CurrentUser() user: AuthUser) {
+  async createSubscription(
+    @CurrentUser() user: AuthUser,
+    @Headers('x-locale') locale: string,
+  ) {
     return this.billingService.createSubscriptionFromSetup(
       user.tenantId,
       user.email,
+      { locale: locale || 'en' },
     );
   }
 

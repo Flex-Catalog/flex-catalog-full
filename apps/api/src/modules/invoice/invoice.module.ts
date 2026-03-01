@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 // Repository
@@ -39,7 +40,7 @@ import { InvoicesController } from './presentation/invoices.controller';
  * - Low coupling: Depends only on @core and prisma
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [ConfigModule, PrismaModule],
   controllers: [InvoicesController],
   providers: [
     // Repository
