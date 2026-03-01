@@ -288,6 +288,7 @@ model Affiliate {
   status        String   @default("PENDING") // PENDING (invited, not yet registered) or ACTIVE
   userId        String?  @db.ObjectId // Linked user after they sign up, null if not registered yet
   inviteToken   String?
+  payoutInfo    Json?    // { method: 'pix'|'bank'|'stripe', pixKeyType?, pixKey?, bankName?, bankAgency?, bankAccount?, bankAccountType?, stripeConnectAccountId? }
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

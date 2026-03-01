@@ -452,6 +452,7 @@ export class ServiceOrder extends AggregateRoot<string> {
    */
   toDocumentData(): Record<string, unknown> {
     return {
+      id: this.id,
       orderNumber: this.orderNumber,
       voucherNumber: this.voucherNumber,
       status: this.status,

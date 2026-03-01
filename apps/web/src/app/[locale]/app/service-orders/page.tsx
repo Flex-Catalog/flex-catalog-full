@@ -206,92 +206,159 @@ export default function ServiceOrdersPage() {
           {t('serviceOrders.noOrders')}
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.number')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.serviceType')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.vessel')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.company')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('invoices.date')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('invoices.status')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order: any) => (
-                <tr key={order.id}>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.orderNumber}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                    {SERVICE_TYPES.find((s) => s.value === order.serviceType)?.label || order.serviceType}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{order.vesselName}</div>
-                    <div className="text-xs text-gray-400">{order.vesselType}</div>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                    {order.companyName}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(order.serviceDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700'}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm space-x-2">
-                    {order.status === 'DRAFT' && (
-                      <button
-                        onClick={() => { setActionError(''); startMutation.mutate(order.id); }}
-                        disabled={startMutation.isPending}
-                        className="text-blue-600 hover:text-blue-800 disabled:opacity-50 font-medium"
-                      >
-                        {startMutation.isPending ? '...' : t('serviceOrders.start')}
-                      </button>
-                    )}
-                    {order.status === 'IN_PROGRESS' && (
-                      <button
-                        onClick={() => { setEndTime(new Date().toISOString().slice(0, 16)); setCompletingId(order.id); }}
-                        className="text-green-600 hover:text-green-800 font-medium"
-                      >
-                        {t('serviceOrders.complete')}
-                      </button>
-                    )}
-                    {(order.status === 'COMPLETED' || order.status === 'INVOICED') && (
-                      <>
-                        <button
-                          onClick={() => openReceipt(order.id)}
-                          className="text-gray-600 hover:text-gray-800"
-                        >
-                          {t('serviceOrders.receipt')}
-                        </button>
-                        <button
-                          onClick={() => openNfse(order.id)}
-                          className="text-purple-600 hover:text-purple-800 ml-2"
-                        >
-                          NFS-e
-                        </button>
-                      </>
-                    )}
-                    {(order.status === 'DRAFT' || order.status === 'IN_PROGRESS') && (
-                      <button
-                        onClick={() => { setActionError(''); cancelMutation.mutate(order.id); }}
-                        disabled={cancelMutation.isPending}
-                        className="text-red-600 hover:text-red-800 ml-2 disabled:opacity-50"
-                      >
-                        {t('invoices.cancel')}
-                      </button>
-                    )}
-                  </td>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg shadow overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.number')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.serviceType')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.vessel')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('serviceOrders.company')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('invoices.date')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('invoices.status')}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('common.actions')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {orders.map((order: any) => (
+                  <tr key={order.id}>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {order.orderNumber}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                      {SERVICE_TYPES.find((s) => s.value === order.serviceType)?.label || order.serviceType}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{order.vesselName}</div>
+                      <div className="text-xs text-gray-400">{order.vesselType}</div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                      {order.companyName}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(order.serviceDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm space-x-2">
+                      {order.status === 'DRAFT' && (
+                        <button
+                          onClick={() => { setActionError(''); startMutation.mutate(order.id); }}
+                          disabled={startMutation.isPending}
+                          className="text-blue-600 hover:text-blue-800 disabled:opacity-50 font-medium"
+                        >
+                          {startMutation.isPending ? '...' : t('serviceOrders.start')}
+                        </button>
+                      )}
+                      {order.status === 'IN_PROGRESS' && (
+                        <button
+                          onClick={() => { setEndTime(new Date().toISOString().slice(0, 16)); setCompletingId(order.id); }}
+                          className="text-green-600 hover:text-green-800 font-medium"
+                        >
+                          {t('serviceOrders.complete')}
+                        </button>
+                      )}
+                      {(order.status === 'COMPLETED' || order.status === 'INVOICED') && (
+                        <>
+                          <button
+                            onClick={() => openReceipt(order.id)}
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            {t('serviceOrders.receipt')}
+                          </button>
+                          <button
+                            onClick={() => openNfse(order.id)}
+                            className="text-purple-600 hover:text-purple-800 ml-2"
+                          >
+                            NFS-e
+                          </button>
+                        </>
+                      )}
+                      {(order.status === 'DRAFT' || order.status === 'IN_PROGRESS') && (
+                        <button
+                          onClick={() => { setActionError(''); cancelMutation.mutate(order.id); }}
+                          disabled={cancelMutation.isPending}
+                          className="text-red-600 hover:text-red-800 ml-2 disabled:opacity-50"
+                        >
+                          {t('invoices.cancel')}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {orders.map((order: any) => (
+              <div key={order.id} className="bg-white rounded-lg shadow p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{order.orderNumber}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{new Date(order.serviceDate).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700'}`}>
+                    {order.status}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700 font-medium">{SERVICE_TYPES.find((s) => s.value === order.serviceType)?.label || order.serviceType}</p>
+                <p className="text-xs text-gray-500 mt-1">{order.vesselName} · {order.vesselType}</p>
+                <p className="text-xs text-gray-500">{order.companyName}</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {order.status === 'DRAFT' && (
+                    <button
+                      onClick={() => { setActionError(''); startMutation.mutate(order.id); }}
+                      disabled={startMutation.isPending}
+                      className="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded-full font-medium disabled:opacity-50"
+                    >
+                      {startMutation.isPending ? '...' : t('serviceOrders.start')}
+                    </button>
+                  )}
+                  {order.status === 'IN_PROGRESS' && (
+                    <button
+                      onClick={() => { setEndTime(new Date().toISOString().slice(0, 16)); setCompletingId(order.id); }}
+                      className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-full font-medium"
+                    >
+                      {t('serviceOrders.complete')}
+                    </button>
+                  )}
+                  {(order.status === 'COMPLETED' || order.status === 'INVOICED') && (
+                    <>
+                      <button
+                        onClick={() => openReceipt(order.id)}
+                        className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full"
+                      >
+                        {t('serviceOrders.receipt')}
+                      </button>
+                      <button
+                        onClick={() => openNfse(order.id)}
+                        className="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full"
+                      >
+                        NFS-e
+                      </button>
+                    </>
+                  )}
+                  {(order.status === 'DRAFT' || order.status === 'IN_PROGRESS') && (
+                    <button
+                      onClick={() => { setActionError(''); cancelMutation.mutate(order.id); }}
+                      disabled={cancelMutation.isPending}
+                      className="text-xs bg-red-100 text-red-700 px-3 py-1.5 rounded-full disabled:opacity-50"
+                    >
+                      {t('invoices.cancel')}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create Modal */}

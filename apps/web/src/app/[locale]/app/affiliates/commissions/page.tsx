@@ -2,7 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useForm } from 'react-hook-form';
 import { api } from '@/lib/api';
+
+interface PayoutForm {
+  method: 'pix' | 'bank' | 'stripe';
+  pixKeyType: 'cpf' | 'cnpj' | 'email' | 'phone' | 'evp';
+  pixKey: string;
+  bankName: string;
+  bankAgency: string;
+  bankAccount: string;
+  bankAccountType: 'corrente' | 'poupanca';
+  stripeConnectAccountId: string;
+}
 
 interface Commission {
   id: string;
@@ -42,17 +54,38 @@ export default function AffiliateCommissionsPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [isAffiliate, setIsAffiliate] = useState(true);
+  const [payoutSaved, setPayoutSaved] = useState(false);
+  const [payoutSaving, setPayoutSaving] = useState(false);
+  const [payoutError, setPayoutError] = useState('');
+
+  const { register, handleSubmit, watch, reset: resetPayout } = useForm<PayoutForm>({
+    defaultValues: { method: 'pix', pixKeyType: 'cpf', bankAccountType: 'corrente' },
+  });
+  const payoutMethod = watch('method');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [profileRes, commissionsRes] = await Promise.all([
+        const [profileRes, commissionsRes, payoutRes] = await Promise.all([
           api.get('/affiliates/my/profile'),
           api.get(`/affiliates/my/commissions?page=${page}&limit=20`),
+          api.get('/affiliates/my/payout-info').catch(() => ({ data: null })),
         ]);
         setProfile(profileRes.data);
         setCommissions(commissionsRes.data.data || commissionsRes.data);
         setTotal(commissionsRes.data.total || 0);
+        if (payoutRes.data) {
+          resetPayout({
+            method: payoutRes.data.method ?? 'pix',
+            pixKeyType: payoutRes.data.pixKeyType ?? 'cpf',
+            pixKey: payoutRes.data.pixKey ?? '',
+            bankName: payoutRes.data.bankName ?? '',
+            bankAgency: payoutRes.data.bankAgency ?? '',
+            bankAccount: payoutRes.data.bankAccount ?? '',
+            bankAccountType: payoutRes.data.bankAccountType ?? 'corrente',
+            stripeConnectAccountId: payoutRes.data.stripeConnectAccountId ?? '',
+          });
+        }
       } catch {
         setIsAffiliate(false);
       } finally {
@@ -60,7 +93,22 @@ export default function AffiliateCommissionsPage() {
       }
     };
     fetchData();
-  }, [page]);
+  }, [page, resetPayout]);
+
+  const onSavePayout = async (data: PayoutForm) => {
+    setPayoutSaving(true);
+    setPayoutError('');
+    setPayoutSaved(false);
+    try {
+      await api.patch('/affiliates/my/payout-info', data);
+      setPayoutSaved(true);
+      setTimeout(() => setPayoutSaved(false), 3000);
+    } catch {
+      setPayoutError(ta('payoutSaveError'));
+    } finally {
+      setPayoutSaving(false);
+    }
+  };
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -122,7 +170,7 @@ export default function AffiliateCommissionsPage() {
               <div className="space-y-2">
                 {profile.tenantAffiliates.map((link) => (
                   <div key={link.id} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-900">{link.tenant.name}</span>
+                    <span className="text-gray-900">{link.tenant?.name || '-'}</span>
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         link.type === 'PARTNER'
@@ -230,6 +278,98 @@ export default function AffiliateCommissionsPage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Payout Info */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="font-semibold text-gray-900">{ta('payoutTitle')}</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{ta('payoutDescription')}</p>
+        </div>
+        <form onSubmit={handleSubmit(onSavePayout)} className="p-4 space-y-4">
+          {/* Method selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{ta('payoutMethod')}</label>
+            <select {...register('method')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <option value="pix">Pix</option>
+              <option value="bank">{ta('payoutBankAccount')}</option>
+              <option value="stripe">Stripe Connect</option>
+            </select>
+          </div>
+
+          {/* Pix fields */}
+          {payoutMethod === 'pix' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('pixKeyType')}</label>
+                <select {...register('pixKeyType')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <option value="cpf">CPF</option>
+                  <option value="cnpj">CNPJ</option>
+                  <option value="email">E-mail</option>
+                  <option value="phone">{ta('pixPhone')}</option>
+                  <option value="evp">{ta('pixEvp')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('pixKey')}</label>
+                <input
+                  {...register('pixKey')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder={ta('pixKeyPlaceholder')}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Bank account fields */}
+          {payoutMethod === 'bank' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankName')}</label>
+                <input {...register('bankName')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ex: Nubank, Itaú, Bradesco" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankAgency')}</label>
+                <input {...register('bankAgency')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0001" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankAccount')}</label>
+                <input {...register('bankAccount')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="12345-6" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankAccountType')}</label>
+                <select {...register('bankAccountType')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                  <option value="corrente">{ta('bankAccountCorrente')}</option>
+                  <option value="poupanca">{ta('bankAccountPoupanca')}</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Stripe Connect */}
+          {payoutMethod === 'stripe' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stripe Connect Account ID</label>
+              <input
+                {...register('stripeConnectAccountId')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                placeholder="acct_..."
+              />
+              <p className="text-xs text-gray-400 mt-1">{ta('stripeConnectHint')}</p>
+            </div>
+          )}
+
+          {payoutError && <p className="text-sm text-red-600">{payoutError}</p>}
+          {payoutSaved && <p className="text-sm text-green-600">{ta('payoutSaveSuccess')}</p>}
+
+          <button
+            type="submit"
+            disabled={payoutSaving}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            {payoutSaving ? t('common.saving') : t('common.save')}
+          </button>
+        </form>
       </div>
     </div>
   );

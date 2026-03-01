@@ -2,12 +2,13 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Param,
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { AffiliateService } from './affiliate.service';
+import { AffiliateService, PayoutInfo } from './affiliate.service';
 import { CurrentUser, RequirePermissions } from '../../common/decorators';
 import { AuthUser } from '@product-catalog/shared';
 import { IsString, IsOptional, IsIn, IsArray, ValidateNested } from 'class-validator';
@@ -105,6 +106,25 @@ export class AffiliateController {
 
   // ---- Admin endpoints ----
 
+  @Patch('my/payout-info')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'Update my payout info (as an affiliate)' })
+  async updatePayoutInfo(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: PayoutInfo,
+  ) {
+    return this.affiliateService.updatePayoutInfo(user.email, dto);
+  }
+
+  @Get('my/payout-info')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'Get my payout info' })
+  async getPayoutInfo(@CurrentUser() user: AuthUser) {
+    return this.affiliateService.getPayoutInfo(user.email);
+  }
+
+  // ---- Admin endpoints ----
+
   @Get('admin/all')
   @RequirePermissions('PLATFORM_ADMIN')
   @SkipTenantCheck()
@@ -114,6 +134,25 @@ export class AffiliateController {
     @Query('limit') limit = '20',
   ) {
     return this.affiliateService.getAllAffiliates(+page, +limit);
+  }
+
+  @Get('admin/commissions/pending')
+  @RequirePermissions('PLATFORM_ADMIN')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'List all pending commissions (admin)' })
+  async getPendingCommissions(
+    @Query('page') page = '1',
+    @Query('limit') limit = '50',
+  ) {
+    return this.affiliateService.getAllPendingCommissions(+page, +limit);
+  }
+
+  @Post('admin/commissions/:commissionId/pay')
+  @RequirePermissions('PLATFORM_ADMIN')
+  @SkipTenantCheck()
+  @ApiOperation({ summary: 'Pay a commission (Stripe Transfer or manual)' })
+  async payCommission(@Param('commissionId') commissionId: string) {
+    return this.affiliateService.payCommission(commissionId);
   }
 
   @Get('admin/:affiliateId/commissions')

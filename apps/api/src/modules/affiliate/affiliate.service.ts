@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../../email/email.service';
+import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import Stripe from 'stripe';
 
 const MAX_AFFILIATES_PER_TENANT = 2;
 const STANDARD_COMMISSION_PERCENT = 10;
@@ -17,12 +19,31 @@ export interface LinkAffiliateInput {
   type?: 'STANDARD' | 'PARTNER';
 }
 
+export interface PayoutInfo {
+  method: 'pix' | 'bank' | 'stripe';
+  pixKeyType?: 'cpf' | 'cnpj' | 'email' | 'phone' | 'evp';
+  pixKey?: string;
+  bankName?: string;
+  bankAgency?: string;
+  bankAccount?: string;
+  bankAccountType?: 'corrente' | 'poupanca';
+  stripeConnectAccountId?: string;
+}
+
 @Injectable()
 export class AffiliateService {
+  private readonly stripe: Stripe;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.stripe = new Stripe(
+      this.configService.get<string>('STRIPE_SECRET_KEY') || '',
+      { apiVersion: '2024-12-18.acacia' as any },
+    );
+  }
 
   /**
    * Link an affiliate to a tenant. If the affiliate doesn't exist, create a
@@ -246,8 +267,22 @@ export class AffiliateService {
       }),
     ]);
 
+    // Fetch tenant names for the commissions
+    const tenantIds = [...new Set(commissions.map((c: any) => c.tenantId))];
+    const tenants = tenantIds.length
+      ? await this.prisma.tenant.findMany({
+          where: { id: { in: tenantIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const tenantMap = new Map(tenants.map((t: any) => [t.id, t]));
+
     return {
-      data: commissions,
+      data: commissions.map((c: any) => ({
+        ...c,
+        amountCents: c.commissionCents,
+        tenant: tenantMap.get(c.tenantId) || { id: c.tenantId, name: '-' },
+      })),
       total,
       totalEarnedCents: totalEarned._sum.commissionCents || 0,
       page,
@@ -275,16 +310,41 @@ export class AffiliateService {
    * Get affiliate info by user email.
    */
   async getAffiliateByEmail(email: string) {
-    return this.prisma.affiliate.findUnique({
+    const affiliate = await this.prisma.affiliate.findUnique({
       where: { email: email.toLowerCase() },
-      include: {
-        tenantLinks: true,
-        commissions: {
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-        },
-      },
+      include: { tenantLinks: true },
     });
+
+    if (!affiliate) return null;
+
+    // Fetch tenant names for each linked company
+    const tenantIds = affiliate.tenantLinks.map((l: any) => l.tenantId);
+    const tenants = tenantIds.length
+      ? await this.prisma.tenant.findMany({
+          where: { id: { in: tenantIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const tenantMap = new Map(tenants.map((t: any) => [t.id, t]));
+
+    const commissionPercent =
+      affiliate.type === 'PARTNER'
+        ? PARTNER_COMMISSION_PERCENT
+        : STANDARD_COMMISSION_PERCENT;
+
+    return {
+      id: affiliate.id,
+      email: affiliate.email,
+      name: affiliate.name,
+      cpf: affiliate.cpf,
+      status: affiliate.status,
+      tenantAffiliates: affiliate.tenantLinks.map((link: any) => ({
+        id: link.id,
+        type: affiliate.type,
+        commissionPercent,
+        tenant: tenantMap.get(link.tenantId) || { id: link.tenantId, name: '-' },
+      })),
+    };
   }
 
   /**
@@ -322,5 +382,123 @@ export class AffiliateService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * Affiliate updates their payout info (Pix, bank account or Stripe Connect).
+   */
+  async updatePayoutInfo(email: string, payoutInfo: PayoutInfo) {
+    const affiliate = await this.prisma.affiliate.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (!affiliate) throw new NotFoundException('Affiliate not found');
+
+    await (this.prisma.affiliate as any).update({
+      where: { id: affiliate.id },
+      data: { payoutInfo },
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Get affiliate's current payout info.
+   */
+  async getPayoutInfo(email: string) {
+    const affiliate = await this.prisma.affiliate.findUnique({
+      where: { email: email.toLowerCase() },
+    });
+    if (!affiliate) throw new NotFoundException('Affiliate not found');
+    return (affiliate as any).payoutInfo ?? null;
+  }
+
+  /**
+   * Admin: list all pending commissions across all affiliates.
+   */
+  async getAllPendingCommissions(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+
+    const [commissions, total] = await Promise.all([
+      this.prisma.affiliateCommission.findMany({
+        where: { status: 'PENDING' },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { affiliate: true },
+      }),
+      this.prisma.affiliateCommission.count({ where: { status: 'PENDING' } }),
+    ]);
+
+    const tenantIds = [...new Set(commissions.map((c: any) => c.tenantId))];
+    const tenants = tenantIds.length
+      ? await this.prisma.tenant.findMany({
+          where: { id: { in: tenantIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const tenantMap = new Map(tenants.map((t: any) => [t.id, t]));
+
+    return {
+      data: commissions.map((c: any) => ({
+        id: c.id,
+        affiliateId: c.affiliateId,
+        affiliateName: c.affiliate.name || c.affiliate.email,
+        affiliateEmail: c.affiliate.email,
+        payoutInfo: (c.affiliate as any).payoutInfo ?? null,
+        tenant: tenantMap.get(c.tenantId) || { id: c.tenantId, name: '-' },
+        amountCents: c.commissionCents,
+        commissionPercent: c.commissionPercent,
+        status: c.status,
+        periodStart: c.periodStart,
+        periodEnd: c.periodEnd,
+        createdAt: c.createdAt,
+      })),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Admin: pay a commission — Stripe Transfer if affiliate has Stripe Connect account,
+   * otherwise marks as manually paid.
+   */
+  async payCommission(commissionId: string): Promise<{ method: 'stripe' | 'manual'; transferId?: string }> {
+    const commission = await this.prisma.affiliateCommission.findUnique({
+      where: { id: commissionId },
+      include: { affiliate: true },
+    });
+
+    if (!commission) throw new NotFoundException('Commission not found');
+    if (commission.status === 'PAID') throw new BadRequestException('Commission is already paid');
+
+    const payoutInfo = (commission.affiliate as any).payoutInfo as PayoutInfo | null;
+    let method: 'stripe' | 'manual' = 'manual';
+    let transferId: string | undefined;
+
+    if (payoutInfo?.stripeConnectAccountId && commission.commissionCents > 0) {
+      try {
+        const transfer = await this.stripe.transfers.create({
+          amount: commission.commissionCents,
+          currency: 'brl',
+          destination: payoutInfo.stripeConnectAccountId,
+          description: `Commission #${commissionId}`,
+          metadata: { commissionId, affiliateId: commission.affiliateId },
+        });
+        transferId = transfer.id;
+        method = 'stripe';
+      } catch {
+        // If Stripe transfer fails, fall back to manual marking
+        method = 'manual';
+      }
+    }
+
+    await this.prisma.affiliateCommission.update({
+      where: { id: commissionId },
+      data: { status: 'PAID' },
+    });
+
+    return { method, transferId };
   }
 }
