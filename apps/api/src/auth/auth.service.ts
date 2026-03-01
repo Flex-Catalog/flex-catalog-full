@@ -184,7 +184,7 @@ export class AuthService {
     const checkoutUrl = await this.billingService.createCheckoutSession(
       tenant.id,
       dto.email,
-      { trialDays: TRIAL_DAYS, stripeCouponId },
+      { trialDays: TRIAL_DAYS, stripeCouponId, locale: dto.locale || 'en' },
     );
 
     return {
