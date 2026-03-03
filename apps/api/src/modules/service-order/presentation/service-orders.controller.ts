@@ -36,6 +36,7 @@ import {
   CreateServiceOrderInput,
   UpdateServiceOrderInput,
   TransportedPerson,
+  ServiceOrderItem,
 } from '../domain/aggregates/service-order.aggregate';
 import {
   IServiceOrderRepository,
@@ -45,6 +46,10 @@ import {
 import { PdfGeneratorService } from '../infrastructure/documents/pdf-generator.service';
 import { FocusNfeService, FiscalConfig } from '../infrastructure/fiscal/focus-nfe.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import {
+  IServiceTypeRepository,
+  SERVICE_TYPE_REPOSITORY,
+} from '../../service-type/domain/repositories/service-type.repository.interface';
 
 /**
  * Create Service Order DTO
@@ -72,6 +77,7 @@ interface CreateServiceOrderDto {
   additionalChargesCents?: number;
   discountCents?: number;
   notes?: string;
+  items?: ServiceOrderItem[];
 }
 
 /**
@@ -88,6 +94,8 @@ export class ServiceOrdersController {
     private readonly repository: IServiceOrderRepository,
     @Inject(EVENT_BUS)
     private readonly eventBus: IEventBus,
+    @Inject(SERVICE_TYPE_REPOSITORY)
+    private readonly serviceTypeRepository: IServiceTypeRepository,
     private readonly pdfGenerator: PdfGeneratorService,
     private readonly focusNfeService: FocusNfeService,
     private readonly prisma: PrismaService,
@@ -172,6 +180,7 @@ export class ServiceOrdersController {
       additionalChargesCents: dto.additionalChargesCents,
       discountCents: dto.discountCents,
       notes: dto.notes,
+      items: dto.items,
       createdById: user.id,
     };
 
@@ -205,6 +214,7 @@ export class ServiceOrdersController {
       additionalChargesCents: dto.additionalChargesCents,
       discountCents: dto.discountCents,
       notes: dto.notes,
+      items: dto.items,
       updatedById: user.id,
     };
 
@@ -333,11 +343,27 @@ export class ServiceOrdersController {
     });
     const fiscal = (tenant?.fiscalConfig ?? {}) as FiscalConfig;
 
-    // Build issuer data from tenant fiscal config
+    // Build issuer data from tenant fiscal config (full DANFSe fields)
     const issuerData = {
       name: fiscal.razaoSocial || tenant?.name || 'Empresa Prestadora de Serviços',
       taxId: tenant?.taxId || '—',
       municipalRegistration: fiscal.inscricaoMunicipal || '—',
+      phone: fiscal.telefone || '—',
+      email: fiscal.email || '—',
+      logradouro: fiscal.logradouro || '',
+      numero: fiscal.numero || '',
+      complemento: fiscal.complemento || '',
+      bairro: fiscal.bairro || '',
+      municipio: fiscal.municipio || '',
+      uf: fiscal.uf || '',
+      cep: fiscal.cep || '—',
+      regimeTributario: fiscal.regimeTributario || fiscal.simplesNacional
+        ? 'Optante - Microempreendedor Individual (MEI)'
+        : 'Simples Nacional',
+      aliquotaISS: fiscal.aliquotaISS ?? 5.0,
+      itemListaServico: fiscal.itemListaServico,
+      codigoTributacaoMunicipal: fiscal.codigoTributacaoMunicipal,
+      // Legacy flat address for old receipt template
       address: [
         fiscal.logradouro,
         fiscal.numero ? `nº ${fiscal.numero}` : null,
@@ -345,9 +371,7 @@ export class ServiceOrdersController {
         fiscal.municipio,
         fiscal.uf,
         fiscal.cep,
-      ]
-        .filter(Boolean)
-        .join(', ') || '—',
+      ].filter(Boolean).join(', ') || '—',
     };
 
     // Check if NFS-e was already issued (stored in nfseData field)
@@ -357,6 +381,14 @@ export class ServiceOrdersController {
     // Platform-level Focus NFe token (set by platform admin via env var)
     const platformToken = this.configService.get<string>('FOCUS_NFE_TOKEN');
     const platformAmbiente = this.configService.get<string>('FOCUS_NFE_AMBIENTE') ?? fiscal.ambiente ?? 'homologacao';
+
+    // Look up service type for per-type fiscal code overrides
+    const orderServiceTypeCode = (data as any).serviceType as string;
+    const serviceTypeEntity = await this.serviceTypeRepository.findByCode(
+      orderServiceTypeCode,
+      user.tenantId,
+    );
+    const stFiscal = serviceTypeEntity?.fiscalCodes ?? {};
 
     // If Focus NFe is configured and NFS-e not yet issued → emit now
     if (
@@ -368,11 +400,16 @@ export class ServiceOrdersController {
     ) {
       this.logger.log(`Emitindo NFS-e via Focus NFe para OS ${data.orderNumber}`);
 
-      const itemListaServico = fiscal.itemListaServico || '17.01'; // default: transporte
-      const aliquotaISS = fiscal.aliquotaISS ?? 5.0;
+      // ServiceType fiscal codes override tenant defaults when set
+      const itemListaServico = stFiscal.itemListaServico ?? fiscal.itemListaServico ?? '17.01';
+      const aliquotaISS = stFiscal.aliquotaISS ?? fiscal.aliquotaISS ?? 5.0;
+      const codigoTributacaoMunicipal = stFiscal.codigoTributacaoMunicipal ?? fiscal.codigoTributacaoMunicipal;
       const ambiente = platformAmbiente as 'homologacao' | 'producao';
       const totalCents = (data as any).totalCents as number;
       const totalReais = totalCents / 100;
+
+      // Dynamic service type label (from DB if available, fallback to VO label)
+      const serviceTypeLabel = serviceTypeEntity?.name ?? (data as any).serviceTypeLabel;
 
       // Build tomador (client) from service order data
       const companyTaxId = (data as any).companyTaxId as string | undefined;
@@ -385,9 +422,11 @@ export class ServiceOrdersController {
         else if (normalized.length === 11) tomador.cpf = normalized;
       }
 
-      // Discriminação composta com informações do serviço
+      // Discriminação composta — inclui codigos fiscais do tipo de serviço
       const discriminacao = [
-        `Serviço: ${(data as any).serviceTypeLabel}`,
+        `Serviço: ${serviceTypeLabel}`,
+        serviceTypeEntity?.description ? `Tipo: ${serviceTypeEntity.description}` : null,
+        itemListaServico ? `Item LC116: ${itemListaServico}` : null,
         `Descrição: ${(data as any).serviceDescription}`,
         `Embarcação: ${(data as any).vesselName} (${(data as any).vesselTypeLabel})`,
         `Data: ${new Date((data as any).serviceDate as string).toLocaleDateString('pt-BR')}`,
@@ -418,7 +457,7 @@ export class ServiceOrdersController {
           discriminacao,
           codigoMunicipio: fiscal.codigoMunicipio,
           aliquota: aliquotaISS,
-          codigoTributacaoMunicipal: fiscal.codigoTributacaoMunicipal,
+          codigoTributacaoMunicipal,
         },
       });
 
@@ -446,6 +485,13 @@ export class ServiceOrdersController {
     } else if (!platformToken) {
       nfseWarning =
         'A plataforma ainda não configurou a integração com Focus NFe. Entre em contato com o suporte.';
+    } else {
+      // platformToken exists but required fiscal config fields are missing
+      const missing: string[] = [];
+      if (!tenant?.taxId) missing.push('CNPJ (cadastre na tela de registro)');
+      if (!fiscal.inscricaoMunicipal) missing.push('Inscrição Municipal');
+      if (!fiscal.codigoMunicipio) missing.push('Código do Município IBGE');
+      nfseWarning = `Esta nota ainda não foi enviada ao governo. Configure os seguintes dados em Configurações → Fiscal para emissão real da NFS-e: ${missing.join(', ')}.`;
     }
 
     // If Focus NFe returned a PDF URL and NFS-e is authorized → redirect to official PDF
@@ -453,8 +499,16 @@ export class ServiceOrdersController {
       return res.redirect(nfseInfo.pdfUrl as string);
     }
 
+    // Merge service-type fiscal overrides into issuerData for the HTML template
+    const issuerDataFinal = {
+      ...issuerData,
+      itemListaServico: stFiscal.itemListaServico ?? issuerData.itemListaServico,
+      aliquotaISS: stFiscal.aliquotaISS ?? issuerData.aliquotaISS,
+      codigoTributacaoMunicipal: stFiscal.codigoTributacaoMunicipal ?? issuerData.codigoTributacaoMunicipal,
+    };
+
     // Generate local HTML (with official data if available)
-    const html = this.pdfGenerator.generateNfseHtml(data, issuerData, nfseInfo, nfseWarning);
+    const html = this.pdfGenerator.generateNfseHtml(data, issuerDataFinal, nfseInfo, nfseWarning);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);

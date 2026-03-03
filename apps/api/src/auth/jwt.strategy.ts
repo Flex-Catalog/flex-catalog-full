@@ -44,6 +44,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const permissions = this.getPermissionsFromRoles(user.roles as Role[]);
 
+    // Check if this user is also registered as an active affiliate (dual-role: company + affiliate)
+    const affiliateRecord = await this.prisma.affiliate.findFirst({
+      where: { userId: user.id, status: 'ACTIVE' },
+      select: { id: true },
+    });
+
     return {
       id: user.id,
       tenantId: user.tenantId,
@@ -53,6 +59,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       permissions,
       tenantStatus: tenantStatus as any,
       tenantFeatures: user.tenant.features as Feature[],
+      isAffiliate: !!affiliateRecord,
     };
   }
 

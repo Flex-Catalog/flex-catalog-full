@@ -21,11 +21,14 @@ export interface DashboardSummaryDto {
     readonly draft: number;
     readonly failed: number;
   };
+  readonly serviceOrders: {
+    readonly total: number;
+    readonly open: number;
+    readonly completed: number;
+  };
   readonly revenue: {
-    readonly today: number;
-    readonly week: number;
     readonly month: number;
-    readonly currency: string;
+    readonly byCurrency: Array<{ currency: string; amount: number }>;
   };
 }
 
@@ -94,12 +97,14 @@ export class GetDashboardSummaryQuery
       productsActive,
       categoriesTotal,
       invoiceStats,
+      serviceOrderStats,
       revenueStats,
     ] = await Promise.all([
       this.prisma.product.count({ where: { tenantId } }),
       this.prisma.product.count({ where: { tenantId, isActive: true } }),
       this.prisma.category.count({ where: { tenantId } }),
       this.getInvoiceStats(tenantId),
+      this.getServiceOrderStats(tenantId),
       this.getRevenueStats(tenantId),
     ]);
 
@@ -114,6 +119,7 @@ export class GetDashboardSummaryQuery
           total: categoriesTotal,
         },
         invoices: invoiceStats,
+        serviceOrders: serviceOrderStats,
         revenue: revenueStats,
       }),
     );
@@ -147,34 +153,49 @@ export class GetDashboardSummaryQuery
     };
   }
 
+  private async getServiceOrderStats(tenantId: string) {
+    const [total, open, completed] = await Promise.all([
+      this.prisma.serviceOrder.count({ where: { tenantId } }),
+      this.prisma.serviceOrder.count({ where: { tenantId, status: { in: ['DRAFT', 'IN_PROGRESS'] } } }),
+      this.prisma.serviceOrder.count({ where: { tenantId, status: 'COMPLETED' } }),
+    ]);
+    return { total, open, completed };
+  }
+
   private async getRevenueStats(tenantId: string) {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(startOfDay);
-    startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-    // Get products revenue (sum of prices * simple count as mock)
-    const products = await this.prisma.product.aggregate({
-      where: { tenantId, isActive: true },
-      _sum: { priceCents: true },
-      _count: true,
+    // Fetch all invoices issued this month
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        tenantId,
+        status: 'ISSUED',
+        issuedAt: { gte: startOfMonth },
+      },
+      select: { payload: true },
     });
 
-    // Mock revenue calculation based on issued invoices
-    const issuedInvoices = await this.prisma.invoice.count({
-      where: { tenantId, status: 'ISSUED' },
-    });
+    // Sum by currency extracted from payload
+    const byCurrency = new Map<string, number>();
+    for (const inv of invoices) {
+      const p = inv.payload as any;
+      const amount: number = p?.total ?? p?.valorServicos ?? p?.valorTotal ?? 0;
+      const currency: string = p?.currency ?? p?.moeda ?? 'BRL';
+      byCurrency.set(currency, (byCurrency.get(currency) ?? 0) + amount);
+    }
 
-    const avgPrice = products._sum.priceCents
-      ? products._sum.priceCents / (products._count || 1)
-      : 0;
+    const byCurrencyArr = Array.from(byCurrency.entries()).map(([currency, amount]) => ({
+      currency,
+      amount,
+    }));
+
+    const month = byCurrencyArr.reduce((s, x) => s + x.amount, 0);
 
     return {
-      today: Math.round(avgPrice * Math.random() * 10),
-      week: Math.round(avgPrice * Math.random() * 50),
-      month: Math.round(avgPrice * issuedInvoices),
-      currency: 'BRL',
+      month,
+      byCurrency: byCurrencyArr,
     };
   }
 }

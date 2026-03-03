@@ -84,10 +84,10 @@ export class BillingService {
   }
 
   /**
-   * Get or create the standard 50% introductory coupon on Stripe (6 months).
+   * Get or create the standard 50% introductory coupon on Stripe (3 months).
    */
   async getOrCreateIntroductoryCoupon(): Promise<string> {
-    const couponId = 'FLEX_INTRO_50';
+    const couponId = 'FLEX_INTRO_50_3M';
     try {
       await this.stripe.coupons.retrieve(couponId);
       return couponId;
@@ -96,8 +96,8 @@ export class BillingService {
         id: couponId,
         percent_off: 50,
         duration: 'repeating',
-        duration_in_months: 6,
-        name: 'FlexCatalog 50% Introductory Discount',
+        duration_in_months: 3,
+        name: 'FlexCatalog 50% Introductory Discount (3 months)',
       });
       return coupon.id;
     }

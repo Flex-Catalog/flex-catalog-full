@@ -10,13 +10,12 @@ import * as crypto from 'crypto';
 import Stripe from 'stripe';
 
 const MAX_AFFILIATES_PER_TENANT = 2;
-const STANDARD_COMMISSION_PERCENT = 10;
-const PARTNER_COMMISSION_PERCENT = 40;
+const COMMISSION_PERCENT_PER_AFFILIATE = 5; // 5% per affiliate, max 2 = max 10% total
 
 export interface LinkAffiliateInput {
   tenantId: string;
   identifier: string; // email or CPF
-  type?: 'STANDARD' | 'PARTNER';
+  type?: 'STANDARD'; // Only STANDARD type supported
 }
 
 export interface PayoutInfo {
@@ -102,6 +101,21 @@ export class AffiliateService {
         this.emailService
           .sendAffiliateInvite(normalizedIdentifier, inviteToken)
           .catch(() => {});
+      }
+    }
+
+    // If the email belongs to an existing user account (a company user), auto-activate
+    // so they can see their affiliate commissions dashboard without a separate invite flow.
+    if (isEmail && !affiliate.userId) {
+      const existingUser = await this.prisma.user.findFirst({
+        where: { email: normalizedIdentifier },
+      });
+      if (existingUser) {
+        await this.prisma.affiliate.update({
+          where: { id: affiliate.id },
+          data: { userId: existingUser.id, status: 'ACTIVE', inviteToken: null },
+        });
+        affiliate = { ...affiliate, userId: existingUser.id, status: 'ACTIVE' };
       }
     }
 
@@ -212,17 +226,8 @@ export class AffiliateService {
     for (const link of links) {
       const aff = link.affiliate;
 
-      // Determine base commission percentage based on type
-      const basePercent =
-        aff.type === 'PARTNER'
-          ? PARTNER_COMMISSION_PERCENT
-          : STANDARD_COMMISSION_PERCENT;
-
-      // Count how many affiliates of the same type are linked
-      const sameTypeCount = links.filter((l: any) => l.affiliate.type === aff.type).length;
-
-      // Split evenly among affiliates of the same type
-      const actualPercent = basePercent / sameTypeCount;
+      // Each affiliate earns a flat 5% commission independently (max 2 affiliates = 10% total)
+      const actualPercent = COMMISSION_PERCENT_PER_AFFILIATE;
       const commissionCents = Math.round(
         (paymentAmountCents * actualPercent) / 100,
       );
@@ -327,11 +332,6 @@ export class AffiliateService {
       : [];
     const tenantMap = new Map(tenants.map((t: any) => [t.id, t]));
 
-    const commissionPercent =
-      affiliate.type === 'PARTNER'
-        ? PARTNER_COMMISSION_PERCENT
-        : STANDARD_COMMISSION_PERCENT;
-
     return {
       id: affiliate.id,
       email: affiliate.email,
@@ -340,8 +340,8 @@ export class AffiliateService {
       status: affiliate.status,
       tenantAffiliates: affiliate.tenantLinks.map((link: any) => ({
         id: link.id,
-        type: affiliate.type,
-        commissionPercent,
+        type: 'STANDARD',
+        commissionPercent: COMMISSION_PERCENT_PER_AFFILIATE,
         tenant: tenantMap.get(link.tenantId) || { id: link.tenantId, name: '-' },
       })),
     };

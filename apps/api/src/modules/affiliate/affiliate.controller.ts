@@ -27,8 +27,8 @@ class LinkAffiliateDto {
   @ApiProperty({ example: 'STANDARD', required: false })
   @IsString()
   @IsOptional()
-  @IsIn(['STANDARD', 'PARTNER'])
-  type?: 'STANDARD' | 'PARTNER';
+  @IsIn(['STANDARD'])
+  type?: 'STANDARD';
 }
 
 class LinkAffiliatesBatchDto {

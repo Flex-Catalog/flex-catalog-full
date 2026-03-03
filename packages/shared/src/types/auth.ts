@@ -32,6 +32,7 @@ export interface AuthUser {
   permissions: Permission[];
   tenantStatus: TenantStatus;
   tenantFeatures: Feature[];
+  isAffiliate?: boolean; // true if this user is linked as an affiliate (even as a company user)
 }
 
 export interface AuthTokens {

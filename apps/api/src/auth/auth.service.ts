@@ -18,7 +18,7 @@ import { AffiliateService } from '../modules/affiliate/affiliate.service';
 import { DEFAULT_FEATURES, TokenPayload, AuthResponse } from '@product-catalog/shared';
 import * as crypto from 'crypto';
 
-const TRIAL_DAYS = 61; // ~2 months
+const TRIAL_DAYS = 30; // 1 month
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
 @Injectable()
@@ -89,7 +89,7 @@ export class AuthService {
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
-    // Create tenant with TRIAL status (free for 2 months)
+    // Create tenant with TRIAL status (free for 1 month)
     const tenant = await this.tenantsService.create({
       name: dto.companyName,
       country: dto.country as any,
@@ -181,11 +181,17 @@ export class AuthService {
     }
 
     // Create Stripe checkout session with trial + discount
-    const checkoutUrl = await this.billingService.createCheckoutSession(
-      tenant.id,
-      dto.email,
-      { trialDays: TRIAL_DAYS, stripeCouponId, locale: dto.locale || 'en' },
-    );
+    // Wrapped in try-catch: if Stripe price IDs are missing the registration still succeeds
+    let checkoutUrl: string | null = null;
+    try {
+      checkoutUrl = await this.billingService.createCheckoutSession(
+        tenant.id,
+        dto.email,
+        { trialDays: TRIAL_DAYS, stripeCouponId, locale: dto.locale || 'en' },
+      );
+    } catch (err: any) {
+      console.error('[Auth] Stripe checkout session failed, registration continues:', err?.message);
+    }
 
     return {
       user: {

@@ -65,6 +65,18 @@ const navItems = [
     translationKey: 'nav.serviceOrders',
   },
   {
+    key: 'clients',
+    href: '/app/clients',
+    icon: 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z',
+    translationKey: 'nav.clients',
+  },
+  {
+    key: 'service-types',
+    href: '/app/service-types',
+    icon: 'M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z',
+    translationKey: 'nav.serviceTypes',
+  },
+  {
     key: 'reports',
     href: '/app/reports',
     icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
@@ -187,10 +199,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isAffiliate = user?.roles?.includes('AFFILIATE');
+  // isPureAffiliate: user whose ONLY account type is AFFILIATE (no company features)
+  const isPureAffiliate = user?.roles?.includes('AFFILIATE');
+  // isAlsoAffiliate: regular company user who is also linked as an active affiliate
+  const isAlsoAffiliate = !isPureAffiliate && user?.isAffiliate === true;
+  // legacy alias
+  const isAffiliate = isPureAffiliate;
 
   // Show payment wall if tenant subscription is blocked (affiliates are exempt)
-  if (blocked && user && !isAffiliate) {
+  if (blocked && user && !isPureAffiliate) {
     return (
       <PaymentWall
         tenantStatus={user.tenantStatus}
@@ -262,6 +279,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
+
+            {/* Commissions link for company users who are also affiliates */}
+            {isAlsoAffiliate && (
+              <>
+                <div className="mx-1 mt-2 mb-1 border-t border-gray-100 pt-2">
+                  <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Filiado</p>
+                </div>
+                <Link
+                  href="/app/affiliates/commissions"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    isActive('/app/affiliates/commissions')
+                      ? 'bg-rose-50 text-rose-700'
+                      : 'text-rose-600 hover:bg-rose-50'
+                  }`}
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  {t('affiliate.commissionsTitle')}
+                </Link>
+              </>
+            )}
 
             {/* Admin links (platform admin only) */}
             {!isAffiliate && user?.roles?.includes('PLATFORM_ADMIN') && (

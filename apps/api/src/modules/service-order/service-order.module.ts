@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { ServiceTypeModule } from '../service-type/service-type.module';
 
 import {
   SERVICE_ORDER_REPOSITORY,
@@ -16,7 +17,7 @@ import { ServiceOrdersController } from './presentation/service-orders.controlle
  * - Handles: creation, tracking, completion, receipt/invoice generation
  */
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [ConfigModule, PrismaModule, ServiceTypeModule],
   controllers: [ServiceOrdersController],
   providers: [
     {

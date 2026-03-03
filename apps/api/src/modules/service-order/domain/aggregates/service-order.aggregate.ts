@@ -31,6 +31,18 @@ export interface TransportedPerson {
 }
 
 /**
+ * Service Order Item (catalog product added to OS)
+ */
+export interface ServiceOrderItem {
+  readonly productId?: string;
+  readonly name: string;
+  readonly qty: number;
+  readonly unitCents: number;
+  readonly totalCents: number;
+  readonly notes?: string;
+}
+
+/**
  * Service Order Props
  */
 interface ServiceOrderProps {
@@ -73,6 +85,7 @@ interface ServiceOrderProps {
   readonly discountCents: number;
   readonly totalCents: number;
   readonly notes: string | null;
+  readonly items: readonly ServiceOrderItem[];
 
   // Tracking
   readonly createdById: string;
@@ -106,6 +119,7 @@ export interface CreateServiceOrderInput {
   readonly additionalChargesCents?: number;
   readonly discountCents?: number;
   readonly notes?: string;
+  readonly items?: ServiceOrderItem[];
   readonly createdById: string;
 }
 
@@ -121,6 +135,7 @@ export interface UpdateServiceOrderInput {
   readonly additionalChargesCents?: number;
   readonly discountCents?: number;
   readonly notes?: string;
+  readonly items?: ServiceOrderItem[];
   readonly updatedById: string;
 }
 
@@ -169,6 +184,7 @@ export class ServiceOrder extends AggregateRoot<string> {
   get discountCents(): number { return this._props.discountCents; }
   get totalCents(): number { return this._props.totalCents; }
   get notes(): string | null { return this._props.notes; }
+  get items(): readonly ServiceOrderItem[] { return this._props.items; }
   get createdById(): string { return this._props.createdById; }
   get updatedById(): string { return this._props.updatedById; }
 
@@ -261,6 +277,7 @@ export class ServiceOrder extends AggregateRoot<string> {
       discountCents: discount,
       totalCents: Math.max(0, total),
       notes: input.notes ?? null,
+      items: Object.freeze([...(input.items ?? [])]),
       createdById: input.createdById,
       updatedById: input.createdById,
     });
@@ -313,6 +330,7 @@ export class ServiceOrder extends AggregateRoot<string> {
         discountCents: props.discountCents ?? 0,
         totalCents: props.totalCents,
         notes: props.notes,
+        items: Object.freeze([...(props.items ?? [])]),
         createdById: props.createdById,
         updatedById: props.updatedById,
       },
@@ -426,6 +444,9 @@ export class ServiceOrder extends AggregateRoot<string> {
     if (input.transportedPeople !== undefined) {
       (newProps as any).transportedPeople = Object.freeze([...input.transportedPeople]);
     }
+    if (input.items !== undefined) {
+      (newProps as any).items = Object.freeze([...input.items]);
+    }
 
     if (input.additionalChargesCents !== undefined) {
       (newProps as any).additionalChargesCents = input.additionalChargesCents;
@@ -487,6 +508,7 @@ export class ServiceOrder extends AggregateRoot<string> {
         currency: this.currency,
       }),
       notes: this.notes,
+      items: [...this.items],
       createdAt: this.createdAt.toISOString(),
     };
   }
@@ -521,6 +543,7 @@ export class ServiceOrder extends AggregateRoot<string> {
       discountCents: this.discountCents,
       totalCents: this.totalCents,
       notes: this.notes,
+      items: [...this.items],
       createdById: this.createdById,
       updatedById: this.updatedById,
     };

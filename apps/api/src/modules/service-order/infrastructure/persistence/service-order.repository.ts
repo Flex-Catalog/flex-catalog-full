@@ -97,6 +97,7 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
         discountCents: data.discountCents as any,
         totalCents: data.totalCents as any,
         notes: data.notes as any,
+        items: data.items as any,
         updatedById: data.updatedById as any,
         updatedAt: new Date(),
       },

@@ -26,8 +26,11 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get('invite') || '';
+  const typeParam = searchParams.get('type');
 
-  const [accountType, setAccountType] = useState<'company' | 'affiliate'>('company');
+  const [accountType, setAccountType] = useState<'company' | 'affiliate'>(
+    typeParam === 'affiliate' ? 'affiliate' : 'company',
+  );
   const [formData, setFormData] = useState({
     name: '',
     email: '',

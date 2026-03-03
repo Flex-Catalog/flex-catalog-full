@@ -160,12 +160,12 @@ export default function ProductsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm space-x-3 whitespace-nowrap">
-                      <button
-                        onClick={() => openEdit(product)}
+                      <Link
+                        href={`/app/products/${product.id}`}
                         className="text-blue-600 hover:text-blue-800 font-medium"
                       >
                         {t('common.edit')}
-                      </button>
+                      </Link>
                       <button
                         onClick={() => { setDeleteTarget(product); setDeleteError(''); }}
                         className="text-red-500 hover:text-red-700 font-medium"

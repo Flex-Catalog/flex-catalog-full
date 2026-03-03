@@ -6,19 +6,20 @@ import { api } from '@/lib/api';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-const SERVICE_TYPES = [
-  { value: 'CREW_TRANSPORT', label: 'Condução de Tripulação' },
-  { value: 'SUPPLY_TRANSPORT', label: 'Transporte de Suprimentos' },
-  { value: 'EQUIPMENT_TRANSPORT', label: 'Transporte de Equipamentos' },
-  { value: 'PERSONNEL_TRANSPORT', label: 'Condução de Funcionários' },
-  { value: 'INSPECTION', label: 'Inspeção' },
-  { value: 'MAINTENANCE_SUPPORT', label: 'Apoio à Manutenção' },
-  { value: 'ANCHORING_SUPPORT', label: 'Apoio à Fundeio' },
-  { value: 'PILOT_TRANSPORT', label: 'Transporte de Prático' },
-  { value: 'CUSTOMS_TRANSPORT', label: 'Transporte Despachante/Alfândega' },
-  { value: 'MEDICAL_TRANSPORT', label: 'Transporte Médico' },
-  { value: 'OTHER', label: 'Outros' },
-];
+// Legacy labels for old orders stored with hardcoded codes (before DB-managed types)
+const LEGACY_SERVICE_TYPE_LABELS: Record<string, string> = {
+  CREW_TRANSPORT: 'Condução de Tripulação',
+  SUPPLY_TRANSPORT: 'Transporte de Suprimentos',
+  EQUIPMENT_TRANSPORT: 'Transporte de Equipamentos',
+  PERSONNEL_TRANSPORT: 'Condução de Funcionários',
+  INSPECTION: 'Inspeção',
+  MAINTENANCE_SUPPORT: 'Apoio à Manutenção',
+  ANCHORING_SUPPORT: 'Apoio à Fundeio',
+  PILOT_TRANSPORT: 'Transporte de Prático',
+  CUSTOMS_TRANSPORT: 'Transporte Despachante/Alfândega',
+  MEDICAL_TRANSPORT: 'Transporte Médico',
+  OTHER: 'Outros',
+};
 
 interface CreateOrderForm {
   serviceType: string;
@@ -53,8 +54,13 @@ export default function ServiceOrdersPage() {
   const [actionError, setActionError] = useState('');
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [endTime, setEndTime] = useState(new Date().toISOString().slice(0, 16));
+  const [clientSearch, setClientSearch] = useState('');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [orderItems, setOrderItems] = useState<Array<{ productId?: string; name: string; qty: number; unitCents: number; totalCents: number }>>([]);
+  const [productComboSearch, setProductComboSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateOrderForm>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<CreateOrderForm>({
     defaultValues: {
       serviceType: 'CREW_TRANSPORT',
       serviceDescription: '',
@@ -81,6 +87,50 @@ export default function ServiceOrdersPage() {
     },
   });
 
+  const { data: serviceTypesData } = useQuery({
+    queryKey: ['service-types'],
+    queryFn: () => api.get('/service-types?isActive=true&limit=200').then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const serviceTypeOptions: Array<{ code: string; name: string }> =
+    (serviceTypesData?.data ?? []).map((st: any) => ({ code: st.code, name: st.name }));
+
+  const { data: clientSearchData } = useQuery({
+    queryKey: ['clients-search', clientSearch],
+    queryFn: () => api.get(`/clients?q=${encodeURIComponent(clientSearch)}`).then((r) => r.data),
+    enabled: clientSearch.trim().length >= 2,
+    staleTime: 30_000,
+  });
+  const clientResults: Array<{ id: string; name: string; tradeName: string | null; taxId: string | null }> =
+    Array.isArray(clientSearchData) ? clientSearchData : (clientSearchData?.data ?? []);
+
+  const { data: productsData } = useQuery({
+    queryKey: ['products-active'],
+    queryFn: () => api.get('/products?isActive=true&limit=500').then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const productOptions: Array<{ id: string; name: string; priceCents: number; categoryId?: string }> =
+    (productsData?.data ?? []).map((p: any) => ({ id: p.id, name: p.name, priceCents: p.priceCents ?? 0, categoryId: p.categoryId }));
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => api.get('/categories').then((r) => r.data),
+    staleTime: 10 * 60 * 1000,
+  });
+  const categories: Array<{ id: string; name: string }> = categoriesData?.data ?? [];
+
+  const filteredProducts = productOptions.filter((p) => {
+    const matchesCat = !categoryFilter || p.categoryId === categoryFilter;
+    const matchesSearch = !productComboSearch.trim() || p.name.toLowerCase().includes(productComboSearch.toLowerCase());
+    return matchesCat && matchesSearch;
+  }).slice(0, 15);
+
+  const getServiceTypeLabel = (code: string) =>
+    serviceTypeOptions.find((s) => s.code === code)?.name ??
+    LEGACY_SERVICE_TYPE_LABELS[code] ??
+    code;
+
   const createMutation = useMutation({
     mutationFn: async (formData: CreateOrderForm) => {
       const payload = {
@@ -98,6 +148,7 @@ export default function ServiceOrdersPage() {
         rateCents: Math.round(formData.rateCents * 100),
         currency: formData.currency,
         notes: formData.notes || undefined,
+        items: orderItems.length > 0 ? orderItems : undefined,
       };
       const res = await api.post('/service-orders', payload);
       return res.data;
@@ -106,6 +157,10 @@ export default function ServiceOrdersPage() {
       queryClient.invalidateQueries({ queryKey: ['service-orders'] });
       setShowModal(false);
       reset();
+      setOrderItems([]);
+      setClientSearch('');
+      setProductComboSearch('');
+      setCategoryFilter('');
     },
     onError: (err: any) => {
       setError(err.response?.data?.message || t('common.error'));
@@ -228,7 +283,7 @@ export default function ServiceOrdersPage() {
                       {order.orderNumber}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                      {SERVICE_TYPES.find((s) => s.value === order.serviceType)?.label || order.serviceType}
+                      {getServiceTypeLabel(order.serviceType)}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{order.vesselName}</div>
@@ -308,7 +363,7 @@ export default function ServiceOrdersPage() {
                     {order.status}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 font-medium">{SERVICE_TYPES.find((s) => s.value === order.serviceType)?.label || order.serviceType}</p>
+                <p className="text-sm text-gray-700 font-medium">{getServiceTypeLabel(order.serviceType)}</p>
                 <p className="text-xs text-gray-500 mt-1">{order.vesselName} · {order.vesselType}</p>
                 <p className="text-xs text-gray-500">{order.companyName}</p>
                 <div className="flex flex-wrap gap-2 mt-3">
@@ -383,9 +438,14 @@ export default function ServiceOrdersPage() {
                     {...register('serviceType', { required: true })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
-                    {SERVICE_TYPES.map((st) => (
-                      <option key={st.value} value={st.value}>{st.label}</option>
-                    ))}
+                    {serviceTypeOptions.length > 0
+                      ? serviceTypeOptions.map((st) => (
+                          <option key={st.code} value={st.code}>{st.name}</option>
+                        ))
+                      : Object.entries(LEGACY_SERVICE_TYPE_LABELS).map(([code, label]) => (
+                          <option key={code} value={code}>{label}</option>
+                        ))
+                    }
                   </select>
                 </div>
                 <div>
@@ -461,6 +521,44 @@ export default function ServiceOrdersPage() {
                     <option value="FOREIGN">Estrangeira</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Client Search / Autocomplete */}
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Buscar cliente cadastrado
+                </label>
+                <input
+                  type="text"
+                  value={clientSearch}
+                  onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true); }}
+                  onFocus={() => clientSearch.length >= 2 && setShowClientDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowClientDropdown(false), 150)}
+                  placeholder="Digite nome ou CNPJ para buscar..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  autoComplete="off"
+                />
+                {showClientDropdown && clientResults.length > 0 && (
+                  <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {clientResults.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onMouseDown={() => {
+                          setValue('companyName', c.name);
+                          setValue('companyTaxId', c.taxId ?? '');
+                          setClientSearch('');
+                          setShowClientDropdown(false);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-0"
+                      >
+                        <span className="font-medium">{c.name}</span>
+                        {c.tradeName && <span className="text-gray-500 ml-1">({c.tradeName})</span>}
+                        {c.taxId && <span className="text-gray-400 ml-2 text-xs font-mono">{c.taxId}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -549,6 +647,129 @@ export default function ServiceOrdersPage() {
                 />
               </div>
 
+              {/* Items / Products Picker */}
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">Produtos / Itens</h3>
+                <div className="flex gap-2 mb-2">
+                  {categories.length > 0 && (
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="px-2 py-1.5 border border-gray-300 rounded-md text-sm flex-shrink-0"
+                    >
+                      <option value="">Todas as categorias</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  )}
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={productComboSearch}
+                      onChange={(e) => setProductComboSearch(e.target.value)}
+                      placeholder="Buscar produto para adicionar..."
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
+                      autoComplete="off"
+                    />
+                    {(productComboSearch.trim().length >= 1 || categoryFilter) && filteredProducts.length > 0 && (
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                        {filteredProducts.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onMouseDown={() => {
+                              setOrderItems((prev) => [
+                                ...prev,
+                                { productId: p.id, name: p.name, qty: 1, unitCents: p.priceCents, totalCents: p.priceCents },
+                              ]);
+                              setProductComboSearch('');
+                            }}
+                            className="w-full text-left px-3 py-1.5 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-0"
+                          >
+                            {p.name}
+                            <span className="text-gray-400 ml-2 text-xs">R$ {(p.priceCents / 100).toFixed(2)}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {orderItems.length > 0 && (
+                  <div className="border rounded-md overflow-hidden mt-1">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-2 py-1.5 text-left text-gray-500 font-medium">Produto</th>
+                          <th className="px-2 py-1.5 text-right text-gray-500 font-medium w-16">Qtd</th>
+                          <th className="px-2 py-1.5 text-right text-gray-500 font-medium w-24">Preço unit.</th>
+                          <th className="px-2 py-1.5 text-right text-gray-500 font-medium w-24">Total</th>
+                          <th className="px-2 py-1.5 w-6"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {orderItems.map((item, idx) => (
+                          <tr key={idx}>
+                            <td className="px-2 py-1">{item.name}</td>
+                            <td className="px-2 py-1">
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.qty}
+                                onChange={(e) => {
+                                  const qty = Math.max(1, Number(e.target.value));
+                                  setOrderItems((prev) =>
+                                    prev.map((it, i) => i === idx ? { ...it, qty, totalCents: qty * it.unitCents } : it),
+                                  );
+                                }}
+                                className="w-full text-right px-1 py-0.5 border border-gray-300 rounded text-xs"
+                              />
+                            </td>
+                            <td className="px-2 py-1">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={(item.unitCents / 100).toFixed(2)}
+                                onChange={(e) => {
+                                  const unitCents = Math.round(Number(e.target.value) * 100);
+                                  setOrderItems((prev) =>
+                                    prev.map((it, i) => i === idx ? { ...it, unitCents, totalCents: it.qty * unitCents } : it),
+                                  );
+                                }}
+                                className="w-full text-right px-1 py-0.5 border border-gray-300 rounded text-xs"
+                              />
+                            </td>
+                            <td className="px-2 py-1 text-right font-medium">
+                              R$ {(item.totalCents / 100).toFixed(2)}
+                            </td>
+                            <td className="px-2 py-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setOrderItems((prev) => prev.filter((_, i) => i !== idx))}
+                                className="text-red-400 hover:text-red-600 font-bold leading-none"
+                              >
+                                ×
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-gray-50 border-t border-gray-200">
+                        <tr>
+                          <td colSpan={3} className="px-2 py-1 text-right text-xs text-gray-500 font-medium">Total itens:</td>
+                          <td className="px-2 py-1 text-right text-sm font-semibold">
+                            R$ {(orderItems.reduce((s, it) => s + it.totalCents, 0) / 100).toFixed(2)}
+                          </td>
+                          <td></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-4 mt-6">
                 <button
                   type="submit"
@@ -559,7 +780,7 @@ export default function ServiceOrdersPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowModal(false); reset(); setError(''); }}
+                  onClick={() => { setShowModal(false); reset(); setError(''); setOrderItems([]); setClientSearch(''); setProductComboSearch(''); setCategoryFilter(''); }}
                   className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300"
                 >
                   {t('common.cancel')}

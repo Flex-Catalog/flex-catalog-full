@@ -24,6 +24,8 @@ import { CouponModule } from './modules/coupon/coupon.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SupportModule } from './modules/support/support.module';
 import { AffiliateModule } from './modules/affiliate/affiliate.module';
+import { ServiceTypeModule } from './modules/service-type/service-type.module';
+import { ClientModule } from './modules/client/client.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantStatusGuard } from './common/guards/tenant-status.guard';
@@ -51,6 +53,8 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     InvoiceModule, // Invoices + Fiscal Providers
     AnalyticsModule, // Dashboard + Reports
     ServiceOrderModule, // Service Orders + Receipts + NFS-e
+    ServiceTypeModule,  // Service Types with fiscal codes
+    ClientModule,       // Client/Company CNPJ book
 
     // Supporting Modules
     BillingModule,

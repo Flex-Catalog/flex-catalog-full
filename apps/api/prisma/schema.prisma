@@ -23,10 +23,12 @@ model Tenant {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  users      User[]
-  products   Product[]
-  categories Category[]
-  invoices   Invoice[]
+  users        User[]
+  products     Product[]
+  categories   Category[]
+  invoices     Invoice[]
+  serviceTypes ServiceType[]
+  clients      Client[]
 
   @@unique([taxId])
   @@index([stripeCustomerId])
@@ -51,12 +53,14 @@ model User {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Relações de auditoria
-  createdProducts   Product[]  @relation("ProductCreatedBy")
-  updatedProducts   Product[]  @relation("ProductUpdatedBy")
-  createdCategories Category[] @relation("CategoryCreatedBy")
-  updatedCategories Category[] @relation("CategoryUpdatedBy")
-  createdInvoices   Invoice[]  @relation("InvoiceCreatedBy")
-  updatedInvoices   Invoice[]  @relation("InvoiceUpdatedBy")
+  createdProducts     Product[]     @relation("ProductCreatedBy")
+  updatedProducts     Product[]     @relation("ProductUpdatedBy")
+  createdCategories   Category[]    @relation("CategoryCreatedBy")
+  updatedCategories   Category[]    @relation("CategoryUpdatedBy")
+  createdInvoices     Invoice[]     @relation("InvoiceCreatedBy")
+  updatedInvoices     Invoice[]     @relation("InvoiceUpdatedBy")
+  createdServiceTypes ServiceType[] @relation("ServiceTypeCreatedBy")
+  updatedServiceTypes ServiceType[] @relation("ServiceTypeUpdatedBy")
   auditLogs         AuditLog[]
 
   @@unique([tenantId, email])
@@ -75,12 +79,13 @@ model Category {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  parent    Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children  Category[] @relation("CategoryToCategory")
-  products  Product[]
-  createdBy User?      @relation("CategoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  updatedBy User?      @relation("CategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent       Category?     @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children     Category[]    @relation("CategoryToCategory")
+  products     Product[]
+  serviceTypes ServiceType[]
+  createdBy    User?         @relation("CategoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedBy    User?         @relation("CategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@index([tenantId])
   @@index([parentId])
@@ -96,8 +101,14 @@ model Product {
   priceCents  Int
   currency    String   @default("USD")
   attributes  Json     @default("{}")
-  fiscal      Json?
   images      String[]
+  // NF-e fiscal codes
+  ncm                      String?
+  cfop                     String?
+  icmsSituacaoTributaria   String?
+  icmsOrigem               Int?
+  pisSituacaoTributaria    String?
+  cofinsSituacaoTributaria String?
   isActive    Boolean  @default(true)
   createdById String?  @db.ObjectId
   updatedById String?  @db.ObjectId
@@ -157,6 +168,46 @@ model Coupon {
   @@index([isActive])
 }
 
+// ===== SERVICE TYPE =====
+model ServiceType {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId    String   @db.ObjectId
+  name        String
+  code        String   // Uppercase slug, e.g. "CREW_TRANSPORT"
+  description String?
+
+  // NFS-e fiscal codes (override tenant fiscalConfig when set)
+  itemListaServico          String?  // LC116, e.g. "16.01"
+  codigoTributacaoMunicipal String?
+  aliquotaISS               Float?   // ISS rate %, e.g. 5.0
+  cnaeCode                  String?
+
+  // NF-e fiscal codes (for product invoice emission)
+  ncm                      String?  // NCM 8 digits
+  cfop                     String?  // e.g. "5102"
+  icmsSituacaoTributaria   String?  // e.g. "102"
+  icmsOrigem               Int?     // 0 = nacional
+  pisSituacaoTributaria    String?  // e.g. "07"
+  cofinsSituacaoTributaria String?  // e.g. "07"
+
+  categoryId  String?  @db.ObjectId
+
+  isActive    Boolean  @default(true)
+  createdById String?  @db.ObjectId
+  updatedById String?  @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy User?     @relation("ServiceTypeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  updatedBy User?     @relation("ServiceTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([isActive])
+}
+
 // ===== SERVICE ORDER =====
 model ServiceOrder {
   id                     String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -200,6 +251,7 @@ model ServiceOrder {
   totalCents             Int
 
   notes                  String?
+  items                  Json?    // Array of { productId, name, qty, unitCents, totalCents, notes? }
 
   // NFS-e data (stored after first issuance via Focus NFe)
   nfseData               Json?    // { numero, codigoVerificacao, pdfUrl, xmlBase64, issuedAt, ref, ambiente }
@@ -331,4 +383,32 @@ model AffiliateCommission {
   @@index([tenantId])
   @@index([status])
   @@index([createdAt])
+}
+
+// ===== CLIENT (CNPJ/CPF BOOK) =====
+model Client {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tenantId    String   @db.ObjectId
+  name        String   // Razão Social
+  tradeName   String?  // Nome Fantasia
+  taxId       String?  // CNPJ or CPF
+  email       String?
+  phone       String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  municipio   String?
+  uf          String?
+  cep         String?
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, taxId])
+  @@index([tenantId])
+  @@index([isActive])
 }
