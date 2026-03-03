@@ -44,6 +44,9 @@ export interface FiscalConfig {
   municipio?: string;
   uf?: string;
   cep?: string;
+  telefone?: string;
+  email?: string;
+  simplesNacional?: boolean;
 }
 
 export interface FocusNfseResult {

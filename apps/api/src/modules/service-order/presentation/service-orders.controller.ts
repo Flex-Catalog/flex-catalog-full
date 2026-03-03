@@ -357,9 +357,11 @@ export class ServiceOrdersController {
       municipio: fiscal.municipio || '',
       uf: fiscal.uf || '',
       cep: fiscal.cep || '—',
-      regimeTributario: fiscal.regimeTributario || fiscal.simplesNacional
-        ? 'Optante - Microempreendedor Individual (MEI)'
-        : 'Simples Nacional',
+      regimeTributario: fiscal.simplesNacional
+        ? 'Simples Nacional'
+        : fiscal.regimeTributario
+          ? String(fiscal.regimeTributario)
+          : '—',
       aliquotaISS: fiscal.aliquotaISS ?? 5.0,
       itemListaServico: fiscal.itemListaServico,
       codigoTributacaoMunicipal: fiscal.codigoTributacaoMunicipal,

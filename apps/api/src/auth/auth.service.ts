@@ -128,7 +128,7 @@ export class AuthService {
           await this.affiliateService.linkAffiliate({
             tenantId: tenant.id,
             identifier: aff.identifier,
-            type: aff.type,
+            type: aff.type === 'STANDARD' ? 'STANDARD' : undefined,
           });
         } catch {
           // Don't block registration if affiliate linking fails
@@ -206,7 +206,7 @@ export class AuthService {
         status: tenant.status as any,
       },
       tokens,
-      checkoutUrl,
+      checkoutUrl: checkoutUrl ?? undefined,
     };
   }
 
