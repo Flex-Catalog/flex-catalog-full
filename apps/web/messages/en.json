@@ -27,7 +27,7 @@
     "reportsDesc": "View metrics and reports",
     "supportDesc": "Open and track support tickets",
     "affiliatesDesc": "Manage affiliates and commissions",
-    "serviceOrdersDesc": "Create and manage maritime service orders"
+    "serviceOrdersDesc": "Create and manage service orders"
   },
   "validation": {
     "required": "Required field",
@@ -448,12 +448,12 @@
   "landing": {
     "login": "Login",
     "createAccount": "Create Free Account",
-    "heroSubtitle": "Complete management platform for maritime services. Product catalog, service orders, invoices and more.",
+    "heroSubtitle": "Complete management platform for your business. Product catalog, service orders, invoices and more.",
     "freeTrialBadge": "Free for 1 month — cancel anytime",
     "startFree": "Start Free",
     "seePricing": "See Pricing",
     "featuresTitle": "Everything you need in one place",
-    "featuresSubtitle": "Manage your entire maritime business with professional, integrated tools.",
+    "featuresSubtitle": "Manage your entire business with professional, integrated tools.",
     "features": {
       "products": {
         "title": "Product Catalog",
@@ -465,7 +465,7 @@
       },
       "serviceOrders": {
         "title": "Service Orders",
-        "description": "Control maritime service orders with day, night and weekend period tracking."
+        "description": "Control service orders with day, night and weekend period tracking."
       },
       "nfse": {
         "title": "Integrated NFS-e",
@@ -514,11 +514,11 @@
     "affiliate": {
       "badge": "Affiliate Program",
       "title": "Earn by Recommending FlexCatalog",
-      "subtitle": "Sign up as an affiliate, refer maritime companies, and earn 5% commission for each company that subscribes — every month, for as long as their subscription stays active.",
+      "subtitle": "Sign up as an affiliate, refer companies, and earn 5% commission for each company that subscribes — every month, for as long as their subscription stays active.",
       "step1Title": "Sign Up for Free",
       "step1Desc": "Create your affiliate account at no cost. No monthly fee, no hidden charges.",
       "step2Title": "Refer Companies",
-      "step2Desc": "Share FlexCatalog with maritime companies and ask them to add your name as their affiliate.",
+      "step2Desc": "Share FlexCatalog with companies and ask them to add your name as their affiliate.",
       "step3Title": "Earn Commissions",
       "step3Desc": "Earn 5% of each referred company's monthly subscription — every month they stay active.",
       "commissionBadge": "5% commission",
@@ -530,7 +530,7 @@
       "ctaButton": "Become an Affiliate",
       "ctaNote": "Free and hassle-free."
     },
-    "ctaTitle": "Ready to transform your maritime management?",
+    "ctaTitle": "Ready to transform your business management?",
     "ctaSubtitle": "Join companies already saving time and money with FlexCatalog.",
     "allRightsReserved": "All rights reserved.",
     "register": {

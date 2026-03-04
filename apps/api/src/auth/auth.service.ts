@@ -161,36 +161,30 @@ export class AuthService {
     const refreshTokenHash = await argon2.hash(tokens.refreshToken);
     await this.usersService.updateRefreshToken(user.id, refreshTokenHash);
 
-    // Build Stripe checkout options: trial + introductory 50% discount
-    let stripeCouponId: string | undefined;
-    if (coupon) {
-      // Custom coupon takes priority
-      stripeCouponId = await this.billingService.createStripeCoupon(
-        coupon.code,
-        coupon.discountPercent,
-        coupon.durationMonths,
-      );
-      // Increment coupon usage
-      await this.prisma.coupon.update({
-        where: { id: coupon.id },
-        data: { currentUses: { increment: 1 } },
-      });
-    } else {
-      // Default 50% introductory discount for 6 months after trial
-      stripeCouponId = await this.billingService.getOrCreateIntroductoryCoupon();
-    }
-
-    // Create Stripe checkout session with trial + discount
-    // Wrapped in try-catch: if Stripe price IDs are missing the registration still succeeds
+    // Build Stripe checkout — entirely non-blocking: any Stripe error keeps registration alive
     let checkoutUrl: string | null = null;
     try {
+      let stripeCouponId: string | undefined;
+      if (coupon) {
+        stripeCouponId = await this.billingService.createStripeCoupon(
+          coupon.code,
+          coupon.discountPercent,
+          coupon.durationMonths,
+        );
+        await this.prisma.coupon.update({
+          where: { id: coupon.id },
+          data: { currentUses: { increment: 1 } },
+        });
+      } else {
+        stripeCouponId = await this.billingService.getOrCreateIntroductoryCoupon();
+      }
       checkoutUrl = await this.billingService.createCheckoutSession(
         tenant.id,
         dto.email,
         { trialDays: TRIAL_DAYS, stripeCouponId, locale: dto.locale || 'en' },
       );
     } catch (err: any) {
-      console.error('[Auth] Stripe checkout session failed, registration continues:', err?.message);
+      console.error('[Auth] Stripe setup failed, registration continues:', err?.message);
     }
 
     return {

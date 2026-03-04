@@ -27,7 +27,7 @@
     "reportsDesc": "Visualize métricas e relatórios",
     "supportDesc": "Abra e acompanhe chamados",
     "affiliatesDesc": "Gerencie afiliados e comissões",
-    "serviceOrdersDesc": "Crie e gerencie ordens de serviço marítimo"
+    "serviceOrdersDesc": "Crie e gerencie ordens de serviço"
   },
   "validation": {
     "required": "Campo obrigatório",
@@ -448,12 +448,12 @@
   "landing": {
     "login": "Entrar",
     "createAccount": "Criar Conta Grátis",
-    "heroSubtitle": "Plataforma completa de gestão para serviços marítimos. Catálogo de produtos, ordens de serviço, notas fiscais e muito mais.",
+    "heroSubtitle": "Plataforma completa de gestão para sua empresa. Catálogo de produtos, ordens de serviço, notas fiscais e muito mais.",
     "freeTrialBadge": "Grátis por 1 mês — cancele quando quiser",
     "startFree": "Começar Grátis",
     "seePricing": "Ver Preços",
     "featuresTitle": "Tudo que você precisa em um só lugar",
-    "featuresSubtitle": "Gerencie toda a operação da sua empresa marítima com ferramentas profissionais e integradas.",
+    "featuresSubtitle": "Gerencie toda a operação da sua empresa com ferramentas profissionais e integradas.",
     "features": {
       "products": {
         "title": "Catálogo de Produtos",
@@ -465,7 +465,7 @@
       },
       "serviceOrders": {
         "title": "Ordens de Serviço",
-        "description": "Controle ordens de serviço marítimo com períodos diurno, noturno e fim de semana."
+        "description": "Controle ordens de serviço com períodos diurno, noturno e fim de semana."
       },
       "nfse": {
         "title": "NFS-e Integrada",
@@ -514,11 +514,11 @@
     "affiliate": {
       "badge": "Programa de Filiados",
       "title": "Ganhe Indicando o FlexCatalog",
-      "subtitle": "Cadastre-se como filiado, indique empresas marítimas e receba 5% de comissão por cada empresa que assinar — todo mês, enquanto a assinatura estiver ativa.",
+      "subtitle": "Cadastre-se como filiado, indique empresas e receba 5% de comissão por cada empresa que assinar — todo mês, enquanto a assinatura estiver ativa.",
       "step1Title": "Cadastre-se Gratuitamente",
       "step1Desc": "Crie sua conta de filiado sem nenhum custo. Sem mensalidade, sem taxas.",
       "step2Title": "Indique Empresas",
-      "step2Desc": "Compartilhe o FlexCatalog com empresas marítimas. Peça para cadastrarem seu nome como filiado.",
+      "step2Desc": "Compartilhe o FlexCatalog com empresas. Peça para cadastrarem seu nome como filiado.",
       "step3Title": "Receba Comissões",
       "step3Desc": "Ganhe 5% do valor mensal de cada empresa indicada, todo mês, pelo tempo que ela permanecer ativa.",
       "commissionBadge": "5% de comissão",
@@ -530,7 +530,7 @@
       "ctaButton": "Quero Ser Filiado",
       "ctaNote": "Gratuito e sem burocracia."
     },
-    "ctaTitle": "Pronto para transformar sua gestão marítima?",
+    "ctaTitle": "Pronto para transformar a gestão da sua empresa?",
     "ctaSubtitle": "Junte-se a empresas que já estão economizando tempo e dinheiro com o FlexCatalog.",
     "allRightsReserved": "Todos os direitos reservados.",
     "register": {

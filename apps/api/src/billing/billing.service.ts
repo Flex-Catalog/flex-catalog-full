@@ -54,6 +54,9 @@ export class BillingService {
     }
 
     const priceId = this.getPriceIdByLocale(options?.locale || 'en');
+    if (!priceId) {
+      throw new Error('Stripe price ID not configured for this locale');
+    }
 
     // Build checkout session params
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
