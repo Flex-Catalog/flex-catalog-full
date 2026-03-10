@@ -5,7 +5,10 @@
     "success": "Éxito",
     "save": "Guardar",
     "saving": "Guardando...",
+    "savedSuccess": "¡Guardado con éxito!",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
     "delete": "Eliminar",
     "edit": "Editar",
     "create": "Crear",
@@ -68,7 +71,10 @@
     "images": "Imágenes",
     "active": "Activo",
     "inactive": "Inactivo",
-    "noProducts": "No se encontraron productos"
+    "noProducts": "No se encontraron productos",
+    "notFound": "Producto no encontrado.",
+    "fiscalCodesTitle": "Códigos Fiscales NF-e",
+    "fiscalCodesDesc": "Necesarios para emitir una Factura de Producto (NF-e) a través de SEFAZ."
   },
   "categories": {
     "title": "Categorías",
@@ -77,7 +83,10 @@
     "edit": "Editar Categoría",
     "name": "Nombre",
     "parent": "Categoría Padre",
-    "noCategories": "No se encontraron categorías"
+    "noCategories": "No se encontraron categorías",
+    "noParent": "— Ninguna —",
+    "deleteTitle": "Eliminar categoría",
+    "deleteConfirm": "¿Está seguro de que desea eliminar {name}? Si hay productos usando esta categoría, la eliminación será bloqueada."
   },
   "invoices": {
     "title": "Facturas",
@@ -122,7 +131,14 @@
     "nextBilling": "Próximo cobro",
     "paymentMethod": "Método de pago",
     "cardOnFile": "Tarjeta registrada",
-    "noCard": "Sin tarjeta registrada"
+    "noCard": "Sin tarjeta registrada",
+    "openingPortal": "Abriendo portal...",
+    "checkoutError": "Error al crear sesión de pago.",
+    "portalError": "Error al abrir el portal.",
+    "cancelHowTitle": "Cómo cancelar tu suscripción:",
+    "cancelStep1": "Haz clic en \"Abrir Portal de Facturación\" arriba",
+    "cancelStep2": "Dentro del portal de Stripe, haz clic en \"Cancelar plan\"",
+    "cancelStep3": "El acceso permanece activo hasta el fin del período pagado"
   },
   "paymentWall": {
     "title": "Suscripción Requerida",
@@ -162,7 +178,28 @@
     "salesByCountry": "Ventas por País",
     "topCategories": "Top Categorías",
     "uncategorized": "Sin Categoría",
-    "noData": "Sin datos"
+    "noData": "Sin datos",
+    "serviceOrders": "Órdenes de Servicio",
+    "open": "abiertas",
+    "completed": "completadas",
+    "invoicesNfe": "Facturas (NF-e)",
+    "monthRevenue": "Ingresos del Mes",
+    "nfseIssued": "NF-e emitidas",
+    "invoicesByStatus": "Facturas por Estado",
+    "productDistribution": "Distribución de Productos",
+    "invoicesByCountry": "Emisiones por País",
+    "invoicesCount": "facturas",
+    "statusDraft": "Borrador",
+    "statusPending": "En espera",
+    "statusIssued": "Emitida",
+    "statusFailed": "Falló",
+    "statusCanceled": "Cancelada",
+    "countryBR": "Brasil 🇧🇷",
+    "countryUS": "Estados Unidos 🇺🇸",
+    "countryPT": "Portugal 🇵🇹",
+    "countryES": "España 🇪🇸",
+    "countryAR": "Argentina 🇦🇷",
+    "countryMX": "México 🇲🇽"
   },
   "users": {
     "title": "Usuarios",
@@ -205,7 +242,16 @@
     "notes": "Notas",
     "start": "Iniciar",
     "complete": "Completar",
-    "receipt": "Recibo"
+    "completeService": "Completar servicio",
+    "endTime": "Hora de fin",
+    "receipt": "Recibo",
+    "searchClient": "Buscar cliente registrado",
+    "productsItems": "Productos / Artículos",
+    "searchProduct": "Buscar producto para agregar...",
+    "errorStart": "Error al iniciar",
+    "errorComplete": "Error al completar",
+    "errorCancel": "Error al cancelar",
+    "errorOpenDoc": "Error al abrir documento."
   },
   "nav": {
     "dashboard": "Panel",
@@ -219,7 +265,11 @@
     "users": "Usuarios",
     "billing": "Suscripción",
     "audit": "Registro de Auditoría",
-    "settings": "Configuración"
+    "settings": "Configuración",
+    "documentSettings": "Configurar Documentos",
+    "atendenteRole": "Agente de Soporte",
+    "atendenteDesc": "Acceso exclusivo a soporte.",
+    "admin": "Admin"
   },
   "clients": {
     "title": "Clientes",
@@ -242,7 +292,15 @@
     "isActive": "Activo",
     "noClients": "No hay clientes registrados.",
     "searchPlaceholder": "Buscar por nombre o ID fiscal...",
-    "selectClient": "Seleccionar cliente"
+    "selectClient": "Seleccionar cliente",
+    "identification": "Identificación",
+    "lookupCnpj": "Buscar CNPJ",
+    "cnpjInvalidLength": "El CNPJ debe tener 14 dígitos",
+    "cnpjFillSuccess": "¡Datos completados con éxito!",
+    "cnpjLookupError": "No se pudo consultar el CNPJ.",
+    "cepInvalidLength": "El código postal debe tener 8 dígitos",
+    "cepFillSuccess": "¡Dirección completada!",
+    "cepLookupError": "Código postal no encontrado."
   },
   "serviceTypes": {
     "title": "Tipos de Servicio",
@@ -294,7 +352,29 @@
     "aliquotaISS": "Alícuota ISS (%)",
     "aliquotaISSHelp": "Tasa ISS cobrada por su municipio (generalmente 2% a 5%)",
     "codigoTributacaoMunicipal": "Código de Tributación Municipal",
-    "savedSuccess": "¡Configuración fiscal guardada con éxito!",
+    "savedSuccess": "¡Configuración guardada con éxito!",
+    "saveError": "Error al guardar la configuración.",
+    "saving": "Guardando...",
+    "save": "Guardar",
+    "loading": "Cargando...",
+    "docTitle": "Configurar Documentos",
+    "docDesc": "Elija qué campos aparecen en su Orden de Servicio y NFS-e.",
+    "docSectionReceipt": "Orden de Servicio / Recibo",
+    "docSectionReceiptDesc": "Campos mostrados en el recibo interno de servicio.",
+    "docSectionNfse": "NFS-e (Factura Electrónica de Servicio)",
+    "docSectionNfseDesc": "Campos opcionales en la factura electrónica.",
+    "docShowClientTaxId": "Mostrar documento del cliente",
+    "docShowClientTaxIdDesc": "Muestra el CPF/CNPJ del cliente en la factura.",
+    "docShowBoatName": "Mostrar nombre de embarcación",
+    "docShowBoatNameDesc": "Muestra el nombre del barco en la orden de servicio.",
+    "docShowPaymentTerms": "Mostrar condiciones de pago",
+    "docShowPaymentTermsDesc": "Muestra términos y formas de pago en el pie.",
+    "docShowSignatureLine": "Mostrar línea de firma",
+    "docShowSignatureLineDesc": "Incluye campo para firma del responsable.",
+    "docShowObservations": "Mostrar observaciones",
+    "docShowObservationsDesc": "Incluye el campo de notas/observaciones en la NFS-e.",
+    "docShowClientAddress": "Mostrar dirección del cliente",
+    "docShowClientAddressDesc": "Incluye la dirección del cliente en la NFS-e."
     "certTitle": "Certificado Digital A1 (e-CNPJ)",
     "certDesc": "Necesario para emitir NFS-e. Cargue el archivo .pfx de su certificado digital A1. Se envía directamente al sistema de emisión — no necesita acceder a ningún otro portal.",
     "certFile": "Archivo del Certificado (.pfx o .p12)",
@@ -368,7 +448,15 @@
     "taxIdLabel": "ID Fiscal",
     "users": "Usuarios",
     "createdAt": "Creado",
-    "noCustomers": "No se encontraron clientes"
+    "noCustomers": "No se encontraron clientes",
+    "affiliateList": "Afiliados",
+    "noAffiliates": "No hay afiliados registrados.",
+    "affiliateName": "Afiliado",
+    "affiliateCompanies": "Empresas",
+    "affiliateTotalEarned": "Total Ganado",
+    "affiliatePending": "Pendiente",
+    "affiliatePaid": "Pagado",
+    "monthlyActiveTitle": "Suscripciones activas por mes (últimos 12 meses)"
   },
   "affiliate": {
     "title": "Afiliados",
@@ -443,10 +531,14 @@
     "payNow": "Pagar",
     "payoutPaidStripe": "¡Transferencia Stripe realizada con éxito!",
     "payoutPaidManual": "Comisión marcada como pagada. Recuerda realizar la transferencia manualmente.",
-    "payoutPayError": "Error al procesar el pago."
+    "payoutPayError": "Error al procesar el pago.",
+    "stripeConnectInfo": "Pago vía Stripe Connect",
+    "stripeConnectInfoDesc": "Las comisiones se pagan automáticamente vía Stripe cuando el admin procesa el pago. Ingrese su ID de cuenta Stripe Connect.",
+    "sectionLabel": "Afiliado"
   },
   "landing": {
     "login": "Iniciar Sesión",
+    "noAccount": "¿No tienes una cuenta?",
     "createAccount": "Crear Cuenta Gratis",
     "heroSubtitle": "Plataforma completa de gestión para tu empresa. Catálogo de productos, órdenes de servicio, facturas y más.",
     "freeTrialBadge": "Gratis por 1 mes — cancela cuando quieras",

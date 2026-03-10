@@ -7,7 +7,7 @@ import '../globals.css';
 
 export const metadata = {
   title: 'FlexCatalog',
-  description: 'Plataforma completa de gestao maritima',
+  description: 'Plataforma de gestão empresarial: catálogo de produtos, ordens de serviço, notas fiscais e muito mais.',
 };
 
 export default async function LocaleLayout({

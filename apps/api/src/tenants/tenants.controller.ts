@@ -54,6 +54,22 @@ export class TenantsController {
     return this.tenantsService.getCertificateStatus(user.tenantId);
   }
 
+  @Get('document-settings')
+  @ApiOperation({ summary: 'Get document customization settings' })
+  async getDocumentSettings(@CurrentUser() user: AuthUser) {
+    return this.tenantsService.getDocumentSettings(user.tenantId);
+  }
+
+  @Patch('document-settings')
+  @RequirePermissions('TENANT_MANAGE')
+  @ApiOperation({ summary: 'Update document customization settings' })
+  async updateDocumentSettings(
+    @CurrentUser() user: AuthUser,
+    @Body() data: Record<string, boolean>,
+  ) {
+    return this.tenantsService.updateDocumentSettings(user.tenantId, data);
+  }
+
   @Post('fiscal-config/certificate')
   @RequirePermissions('TENANT_MANAGE')
   @ApiOperation({ summary: 'Upload digital certificate (.pfx) to Focus NFe' })

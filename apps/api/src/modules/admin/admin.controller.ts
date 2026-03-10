@@ -37,4 +37,21 @@ export class AdminController {
   async getPayments(@Query('limit') limit = '10') {
     return this.adminService.getRecentPayments(+limit);
   }
+
+  @Get('affiliates')
+  @RequirePermissions('PLATFORM_ADMIN')
+  @ApiOperation({ summary: 'Get all affiliates with commission stats' })
+  async getAffiliates(
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.adminService.getAffiliateStats(+page, +limit);
+  }
+
+  @Get('stats/monthly-revenue')
+  @RequirePermissions('PLATFORM_ADMIN')
+  @ApiOperation({ summary: 'Monthly active subscription count (last 12 months)' })
+  async getMonthlyRevenue() {
+    return this.adminService.getMonthlyRevenue();
+  }
 }

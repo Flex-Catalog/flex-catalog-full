@@ -40,4 +40,34 @@ export class EmailService {
 
     // TODO: Replace with actual email sending
   }
+
+  async sendNewTicketNotification(to: string, subject: string, ticketId: string, fromCompany: string): Promise<void> {
+    this.logger.log(
+      `[EMAIL] New ticket notification to ${to}: [#${ticketId}] "${subject}" from ${fromCompany}`,
+    );
+    // TODO: Replace with actual email sending (nodemailer/SendGrid/SES)
+    // await this.transporter.sendMail({
+    //   from: this.fromEmail,
+    //   to,
+    //   subject: `[Novo Chamado] ${subject}`,
+    //   html: `<p>Nova solicitação de suporte de <strong>${fromCompany}</strong>.</p>
+    //          <p><strong>Assunto:</strong> ${subject}</p>
+    //          <p><a href="${this.frontendUrl}/app/support/admin/tickets/${ticketId}">Ver chamado</a></p>`,
+    // });
+  }
+
+  async sendTicketReplyNotification(to: string, subject: string, ticketId: string, locale = 'pt'): Promise<void> {
+    const ticketUrl = `${this.frontendUrl}/${locale}/app/support/tickets/${ticketId}`;
+    this.logger.log(
+      `[EMAIL] Ticket reply notification to ${to}: [#${ticketId}] "${subject}" - ${ticketUrl}`,
+    );
+    // TODO: Replace with actual email sending
+    // await this.transporter.sendMail({
+    //   from: this.fromEmail,
+    //   to,
+    //   subject: `[Resposta] ${subject}`,
+    //   html: `<p>Seu chamado recebeu uma resposta.</p>
+    //          <p><a href="${ticketUrl}">Ver chamado</a></p>`,
+    // });
+  }
 }

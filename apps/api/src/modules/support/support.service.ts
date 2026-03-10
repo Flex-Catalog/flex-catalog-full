@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EmailService } from '../../email/email.service';
 
 export interface CreateTicketInput {
   tenantId: string;
@@ -8,6 +9,7 @@ export interface CreateTicketInput {
   subject: string;
   message: string;
   senderName: string;
+  companyName?: string;
   priority?: string;
 }
 
@@ -17,11 +19,15 @@ export interface AddMessageInput {
   senderName: string;
   content: string;
   isAdmin?: boolean;
+  replyToEmail?: string;
 }
 
 @Injectable()
 export class SupportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async createTicket(input: CreateTicketInput) {
     const ticket = await this.prisma.supportTicket.create({
@@ -45,6 +51,19 @@ export class SupportService {
       },
     });
 
+    // Notify all support staff (ATENDENTE + PLATFORM_ADMIN) by email
+    this.prisma.user.findMany({
+      where: { roles: { hasSome: ['ATENDENTE', 'PLATFORM_ADMIN'] } },
+      select: { email: true },
+    }).then((staff) => {
+      const companyName = input.companyName || input.senderName;
+      for (const s of staff) {
+        this.emailService
+          .sendNewTicketNotification(s.email, input.subject, ticket.id, companyName)
+          .catch(() => {});
+      }
+    }).catch(() => {});
+
     return ticket;
   }
 
@@ -67,12 +86,19 @@ export class SupportService {
       },
     });
 
-    // If admin replies, move to IN_PROGRESS
+    // If admin replies, move to IN_PROGRESS and notify the ticket creator
     if (input.isAdmin && ticket.status === 'OPEN') {
       await this.prisma.supportTicket.update({
         where: { id: input.ticketId },
         data: { status: 'IN_PROGRESS' },
       });
+    }
+
+    // Notify the ticket creator when admin/atendente replies
+    if (input.isAdmin && input.replyToEmail) {
+      this.emailService
+        .sendTicketReplyNotification(input.replyToEmail, ticket.subject, ticket.id)
+        .catch(() => {});
     }
 
     return message;

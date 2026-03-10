@@ -116,6 +116,7 @@ export class ClientsController {
       municipio: d.localidade || null,
       uf: d.uf || null,
       cep: cleaned,
+      codigoMunicipio: d.ibge || null,
     };
   }
 

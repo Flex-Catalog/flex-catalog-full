@@ -36,7 +36,8 @@ export default function FiscalSettingsPage() {
   const [certError, setCertError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, reset } = useForm<FiscalConfigForm>();
+  const { register, handleSubmit, reset, setValue } = useForm<FiscalConfigForm>();
+  const [cepLoading, setCepLoading] = useState(false);
 
   const { data: config, isLoading } = useQuery({
     queryKey: ['fiscal-config'],
@@ -93,6 +94,25 @@ export default function FiscalSettingsPage() {
       return res.data as { uploaded: boolean; uploadedAt: string | null };
     },
   });
+
+  const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '');
+    if (cep.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await api.get(`/clients/lookup/cep/${cep}`);
+      const d = res.data;
+      if (d.logradouro) setValue('logradouro', d.logradouro);
+      if (d.bairro) setValue('bairro', d.bairro);
+      if (d.municipio) setValue('municipio', d.municipio);
+      if (d.uf) setValue('uf', d.uf);
+      if (d.codigoMunicipio) setValue('codigoMunicipio', d.codigoMunicipio);
+    } catch {
+      // silently ignore lookup failures
+    } finally {
+      setCepLoading(false);
+    }
+  };
 
   const certMutation = useMutation({
     mutationFn: async () => {
@@ -282,11 +302,17 @@ export default function FiscalSettingsPage() {
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.cep')}</label>
-                <input
-                  {...register('cep')}
-                  placeholder="00000-000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    {...register('cep')}
+                    onBlur={handleCepBlur}
+                    placeholder="00000-000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {cepLoading && (
+                    <span className="absolute right-3 top-2.5 text-xs text-gray-400">buscando...</span>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.municipio')}</label>

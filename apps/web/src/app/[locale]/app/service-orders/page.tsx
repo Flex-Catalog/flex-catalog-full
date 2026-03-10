@@ -178,7 +178,7 @@ export default function ServiceOrdersPage() {
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.response?.data?.error?.message || t('common.error');
-      setActionError(`Erro ao iniciar: ${msg}`);
+      setActionError(`${t('serviceOrders.errorStart')}: ${msg}`);
     },
   });
 
@@ -194,7 +194,7 @@ export default function ServiceOrdersPage() {
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.response?.data?.error?.message || t('common.error');
-      setActionError(`Erro ao concluir: ${msg}`);
+      setActionError(`${t('serviceOrders.errorComplete')}: ${msg}`);
     },
   });
 
@@ -209,7 +209,7 @@ export default function ServiceOrdersPage() {
     },
     onError: (err: any) => {
       const msg = err.response?.data?.message || err.response?.data?.error?.message || t('common.error');
-      setActionError(`Erro ao cancelar: ${msg}`);
+      setActionError(`${t('serviceOrders.errorCancel')}: ${msg}`);
     },
   });
 
@@ -226,7 +226,7 @@ export default function ServiceOrdersPage() {
       const blobUrl = URL.createObjectURL(blob);
       window.open(blobUrl, '_blank');
     } catch {
-      alert('Erro ao abrir documento.');
+      alert(t('serviceOrders.errorOpenDoc'));
     }
   };
 
@@ -526,7 +526,7 @@ export default function ServiceOrdersPage() {
               {/* Client Search / Autocomplete */}
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Buscar cliente cadastrado
+                  {t('serviceOrders.searchClient')}
                 </label>
                 <input
                   type="text"
@@ -649,7 +649,7 @@ export default function ServiceOrdersPage() {
 
               {/* Items / Products Picker */}
               <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold text-gray-800 mb-3">Produtos / Itens</h3>
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">{t('serviceOrders.productsItems')}</h3>
                 <div className="flex gap-2 mb-2">
                   {categories.length > 0 && (
                     <select
@@ -668,7 +668,7 @@ export default function ServiceOrdersPage() {
                       type="text"
                       value={productComboSearch}
                       onChange={(e) => setProductComboSearch(e.target.value)}
-                      placeholder="Buscar produto para adicionar..."
+                      placeholder={t('serviceOrders.searchProduct')}
                       className="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm"
                       autoComplete="off"
                     />
@@ -701,7 +701,7 @@ export default function ServiceOrdersPage() {
                     <table className="w-full text-xs">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-2 py-1.5 text-left text-gray-500 font-medium">Produto</th>
+                          <th className="px-2 py-1.5 text-left text-gray-500 font-medium">{t('products.title')}</th>
                           <th className="px-2 py-1.5 text-right text-gray-500 font-medium w-16">Qtd</th>
                           <th className="px-2 py-1.5 text-right text-gray-500 font-medium w-24">Preço unit.</th>
                           <th className="px-2 py-1.5 text-right text-gray-500 font-medium w-24">Total</th>
@@ -795,9 +795,9 @@ export default function ServiceOrdersPage() {
       {completingId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-sm">
-            <h2 className="text-lg font-bold mb-4 text-gray-900">{t('serviceOrders.complete')} serviço</h2>
+            <h2 className="text-lg font-bold mb-4 text-gray-900">{t('serviceOrders.completeService')}</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Hora de término *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('serviceOrders.endTime')} *</label>
               <input
                 type="datetime-local"
                 value={endTime}
@@ -811,7 +811,7 @@ export default function ServiceOrdersPage() {
                 disabled={completeMutation.isPending || !endTime}
                 className="flex-1 bg-green-600 text-white py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
               >
-                {completeMutation.isPending ? t('common.saving') : 'Confirmar'}
+                {completeMutation.isPending ? t('common.saving') : t('common.confirm')}
               </button>
               <button
                 onClick={() => setCompletingId(null)}

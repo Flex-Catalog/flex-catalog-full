@@ -1,31 +1,15 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useParams } from 'next/navigation';
 
 const CURRENCY_SYMBOL: Record<string, string> = { BRL: 'R$', USD: '$', EUR: '€' };
-const COUNTRY_NAME: Record<string, string> = {
-  BR: 'Brasil 🇧🇷',
-  US: 'Estados Unidos 🇺🇸',
-  PT: 'Portugal 🇵🇹',
-  ES: 'Espanha 🇪🇸',
-  AR: 'Argentina 🇦🇷',
-  MX: 'México 🇲🇽',
-};
 
-const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  DRAFT:    { label: 'Rascunho',  color: 'bg-gray-100 text-gray-600' },
-  PENDING:  { label: 'Aguardando', color: 'bg-yellow-100 text-yellow-700' },
-  ISSUED:   { label: 'Emitida',   color: 'bg-green-100 text-green-700' },
-  FAILED:   { label: 'Falhou',    color: 'bg-red-100 text-red-700' },
-  CANCELED: { label: 'Cancelada', color: 'bg-gray-100 text-gray-500' },
-};
-
-function formatCurrency(amount: number, currency: string) {
+function formatCurrency(amount: number, currency: string, locale: string) {
   const sym = CURRENCY_SYMBOL[currency] ?? currency;
-  return `${sym} ${(amount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${sym} ${(amount / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function StatCard({
@@ -49,6 +33,24 @@ function StatCard({
 export default function ReportsPage() {
   const t = useTranslations();
   const { locale } = useParams() as { locale: string };
+  const currentLocale = useLocale();
+
+  const COUNTRY_NAME: Record<string, string> = {
+    BR: t('reports.countryBR'),
+    US: t('reports.countryUS'),
+    PT: t('reports.countryPT'),
+    ES: t('reports.countryES'),
+    AR: t('reports.countryAR'),
+    MX: t('reports.countryMX'),
+  };
+
+  const STATUS_LABEL: Record<string, { label: string; color: string }> = {
+    DRAFT:    { label: t('reports.statusDraft'),    color: 'bg-gray-100 text-gray-600' },
+    PENDING:  { label: t('reports.statusPending'),  color: 'bg-yellow-100 text-yellow-700' },
+    ISSUED:   { label: t('reports.statusIssued'),   color: 'bg-green-100 text-green-700' },
+    FAILED:   { label: t('reports.statusFailed'),   color: 'bg-red-100 text-red-700' },
+    CANCELED: { label: t('reports.statusCanceled'), color: 'bg-gray-100 text-gray-500' },
+  };
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['dashboard'],
@@ -89,7 +91,7 @@ export default function ReportsPage() {
           {byCurrency.map((c) => (
             <div key={c.currency} className="flex justify-between items-center">
               <span className="text-xs font-medium text-gray-500">{c.currency}</span>
-              <span className="text-lg font-bold text-gray-900">{formatCurrency(c.amount, c.currency)}</span>
+              <span className="text-lg font-bold text-gray-900">{formatCurrency(c.amount, c.currency, currentLocale)}</span>
             </div>
           ))}
         </div>
@@ -97,7 +99,7 @@ export default function ReportsPage() {
     }
     return (
       <p className="text-3xl font-bold text-gray-900 mt-2">
-        {formatCurrency(byCurrency[0].amount, byCurrency[0].currency)}
+        {formatCurrency(byCurrency[0].amount, byCurrency[0].currency, currentLocale)}
       </p>
     );
   };
@@ -132,18 +134,18 @@ export default function ReportsPage() {
           value={d.categories.total}
         />
         <StatCard
-          label="Ordens de Serviço"
+          label={t('reports.serviceOrders')}
           value={d.serviceOrders?.total ?? 0}
           sub={
             <>
-              <span className="text-blue-600 font-medium">{d.serviceOrders?.open ?? 0} abertas</span>
+              <span className="text-blue-600 font-medium">{d.serviceOrders?.open ?? 0} {t('reports.open')}</span>
               {' · '}
-              <span className="text-green-600">{d.serviceOrders?.completed ?? 0} concluídas</span>
+              <span className="text-green-600">{d.serviceOrders?.completed ?? 0} {t('reports.completed')}</span>
             </>
           }
         />
         <StatCard
-          label="Notas Fiscais (NF-e)"
+          label={t('reports.invoicesNfe')}
           value={d.invoices.total}
           sub={
             <>
@@ -157,9 +159,9 @@ export default function ReportsPage() {
         {/* Revenue card */}
         <div className="bg-white rounded-lg shadow p-5 col-span-2 sm:col-span-1">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Receita do Mês
+            {t('reports.monthRevenue')}
           </p>
-          <p className="text-xs text-gray-400 mt-0.5">NF-e emitidas</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t('reports.nfseIssued')}</p>
           {byCurrency.length === 0 ? (
             <p className="text-2xl font-bold text-gray-400 mt-2">—</p>
           ) : hasMultipleCurrencies ? (
@@ -167,13 +169,13 @@ export default function ReportsPage() {
               {byCurrency.map((c) => (
                 <div key={c.currency} className="flex justify-between items-center">
                   <span className="text-xs font-medium text-gray-500">{c.currency}</span>
-                  <span className="text-base font-bold text-gray-900">{formatCurrency(c.amount, c.currency)}</span>
+                  <span className="text-base font-bold text-gray-900">{formatCurrency(c.amount, c.currency, currentLocale)}</span>
                 </div>
               ))}
             </div>
           ) : (
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {formatCurrency(byCurrency[0].amount, byCurrency[0].currency)}
+              {formatCurrency(byCurrency[0].amount, byCurrency[0].currency, currentLocale)}
             </p>
           )}
         </div>
@@ -184,7 +186,7 @@ export default function ReportsPage() {
 
         {/* Notas por Status */}
         <div className="bg-white rounded-lg shadow p-5">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Notas Fiscais por Status</h2>
+          <h2 className="text-sm font-semibold text-gray-800 mb-4">{t('reports.invoicesByStatus')}</h2>
           {statusEntries.length === 0 ? (
             <p className="text-sm text-gray-400">{t('reports.noData')}</p>
           ) : (
@@ -206,7 +208,7 @@ export default function ReportsPage() {
 
         {/* Produtos por Categoria */}
         <div className="bg-white rounded-lg shadow p-5">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Distribuição de Produtos</h2>
+          <h2 className="text-sm font-semibold text-gray-800 mb-4">{t('reports.productDistribution')}</h2>
           {byCategory.length === 0 ? (
             <p className="text-sm text-gray-400">{t('reports.noData')}</p>
           ) : (
@@ -231,7 +233,7 @@ export default function ReportsPage() {
 
         {/* Emissões por País */}
         <div className="bg-white rounded-lg shadow p-5">
-          <h2 className="text-sm font-semibold text-gray-800 mb-4">Emissões por País</h2>
+          <h2 className="text-sm font-semibold text-gray-800 mb-4">{t('reports.invoicesByCountry')}</h2>
           {countryEntries.length === 0 ? (
             <p className="text-sm text-gray-400">{t('reports.noData')}</p>
           ) : (
@@ -239,7 +241,7 @@ export default function ReportsPage() {
               {countryEntries.map(([country, count]) => (
                 <div key={country} className="flex justify-between items-center">
                   <span className="text-sm text-gray-700">{COUNTRY_NAME[country] ?? country}</span>
-                  <span className="text-sm font-semibold text-gray-900">{count} notas</span>
+                  <span className="text-sm font-semibold text-gray-900">{count} {t('reports.invoicesCount')}</span>
                 </div>
               ))}
             </div>

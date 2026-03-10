@@ -5,7 +5,10 @@
     "success": "Success",
     "save": "Save",
     "saving": "Saving...",
+    "savedSuccess": "Saved successfully!",
     "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
@@ -68,7 +71,10 @@
     "images": "Images",
     "active": "Active",
     "inactive": "Inactive",
-    "noProducts": "No products found"
+    "noProducts": "No products found",
+    "notFound": "Product not found.",
+    "fiscalCodesTitle": "NF-e Fiscal Codes",
+    "fiscalCodesDesc": "Required for issuing a Product Invoice (NF-e) through SEFAZ."
   },
   "categories": {
     "title": "Categories",
@@ -77,7 +83,10 @@
     "edit": "Edit Category",
     "name": "Name",
     "parent": "Parent Category",
-    "noCategories": "No categories found"
+    "noCategories": "No categories found",
+    "noParent": "— None —",
+    "deleteTitle": "Delete category",
+    "deleteConfirm": "Are you sure you want to delete {name}? If products are using this category, deletion will be blocked."
   },
   "invoices": {
     "title": "Invoices",
@@ -122,7 +131,14 @@
     "nextBilling": "Next billing",
     "paymentMethod": "Payment method",
     "cardOnFile": "Card on file",
-    "noCard": "No card registered"
+    "noCard": "No card registered",
+    "openingPortal": "Opening portal...",
+    "checkoutError": "Error creating checkout session.",
+    "portalError": "Error opening portal.",
+    "cancelHowTitle": "How to cancel your subscription:",
+    "cancelStep1": "Click \"Open Billing Portal\" above",
+    "cancelStep2": "Inside the Stripe portal, click \"Cancel plan\"",
+    "cancelStep3": "Access remains active until the end of the paid period"
   },
   "paymentWall": {
     "title": "Subscription Required",
@@ -162,7 +178,28 @@
     "salesByCountry": "Sales by Country",
     "topCategories": "Top Categories",
     "uncategorized": "Uncategorized",
-    "noData": "No data"
+    "noData": "No data",
+    "serviceOrders": "Service Orders",
+    "open": "open",
+    "completed": "completed",
+    "invoicesNfe": "Invoices (NF-e)",
+    "monthRevenue": "Monthly Revenue",
+    "nfseIssued": "NF-e issued",
+    "invoicesByStatus": "Invoices by Status",
+    "productDistribution": "Product Distribution",
+    "invoicesByCountry": "Invoices by Country",
+    "invoicesCount": "invoices",
+    "statusDraft": "Draft",
+    "statusPending": "Pending",
+    "statusIssued": "Issued",
+    "statusFailed": "Failed",
+    "statusCanceled": "Canceled",
+    "countryBR": "Brazil 🇧🇷",
+    "countryUS": "United States 🇺🇸",
+    "countryPT": "Portugal 🇵🇹",
+    "countryES": "Spain 🇪🇸",
+    "countryAR": "Argentina 🇦🇷",
+    "countryMX": "Mexico 🇲🇽"
   },
   "users": {
     "title": "Users",
@@ -205,7 +242,16 @@
     "notes": "Notes",
     "start": "Start",
     "complete": "Complete",
-    "receipt": "Receipt"
+    "completeService": "Complete service",
+    "endTime": "End time",
+    "receipt": "Receipt",
+    "searchClient": "Search registered client",
+    "productsItems": "Products / Items",
+    "searchProduct": "Search product to add...",
+    "errorStart": "Error starting",
+    "errorComplete": "Error completing",
+    "errorCancel": "Error canceling",
+    "errorOpenDoc": "Error opening document."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -219,7 +265,11 @@
     "users": "Users",
     "billing": "Subscription",
     "audit": "Audit Log",
-    "settings": "Settings"
+    "settings": "Settings",
+    "documentSettings": "Document Settings",
+    "atendenteRole": "Support Agent",
+    "atendenteDesc": "Support access only.",
+    "admin": "Admin"
   },
   "clients": {
     "title": "Clients",
@@ -242,7 +292,15 @@
     "isActive": "Active",
     "noClients": "No clients registered.",
     "searchPlaceholder": "Search by name, trade name or tax ID...",
-    "selectClient": "Select client"
+    "selectClient": "Select client",
+    "identification": "Identification",
+    "lookupCnpj": "Look up CNPJ",
+    "cnpjInvalidLength": "CNPJ must have 14 digits",
+    "cnpjFillSuccess": "Data filled successfully!",
+    "cnpjLookupError": "Could not look up CNPJ.",
+    "cepInvalidLength": "ZIP code must have 8 digits",
+    "cepFillSuccess": "Address filled!",
+    "cepLookupError": "ZIP code not found."
   },
   "serviceTypes": {
     "title": "Service Types",
@@ -294,7 +352,29 @@
     "aliquotaISS": "ISS Rate (%)",
     "aliquotaISSHelp": "ISS rate charged by your city (usually 2% to 5%)",
     "codigoTributacaoMunicipal": "Municipal Taxation Code",
-    "savedSuccess": "Fiscal settings saved successfully!",
+    "savedSuccess": "Settings saved successfully!",
+    "saveError": "Error saving settings.",
+    "saving": "Saving...",
+    "save": "Save",
+    "loading": "Loading...",
+    "docTitle": "Document Settings",
+    "docDesc": "Choose which fields appear on your Service Order and NFS-e.",
+    "docSectionReceipt": "Service Order / Receipt",
+    "docSectionReceiptDesc": "Fields shown on the internal service receipt.",
+    "docSectionNfse": "NFS-e (Electronic Service Invoice)",
+    "docSectionNfseDesc": "Optional fields shown on the electronic invoice.",
+    "docShowClientTaxId": "Show client tax ID",
+    "docShowClientTaxIdDesc": "Shows the client's CPF/CNPJ on the invoice.",
+    "docShowBoatName": "Show vessel name",
+    "docShowBoatNameDesc": "Shows the boat/vessel name on the service order.",
+    "docShowPaymentTerms": "Show payment terms",
+    "docShowPaymentTermsDesc": "Shows payment terms and conditions in the footer.",
+    "docShowSignatureLine": "Show signature line",
+    "docShowSignatureLineDesc": "Includes a signature field for the responsible party.",
+    "docShowObservations": "Show observations",
+    "docShowObservationsDesc": "Includes the notes/observations field on the NFS-e.",
+    "docShowClientAddress": "Show client address",
+    "docShowClientAddressDesc": "Includes the client's address on the NFS-e."
     "certTitle": "Digital Certificate A1 (e-CNPJ)",
     "certDesc": "Required to issue NFS-e. Upload your .pfx digital certificate file. It is sent directly to the issuing system — no need to access any other portal.",
     "certFile": "Certificate File (.pfx or .p12)",
@@ -368,7 +448,15 @@
     "taxIdLabel": "Tax ID",
     "users": "Users",
     "createdAt": "Created",
-    "noCustomers": "No customers found"
+    "noCustomers": "No customers found",
+    "affiliateList": "Affiliates",
+    "noAffiliates": "No affiliates registered.",
+    "affiliateName": "Affiliate",
+    "affiliateCompanies": "Companies",
+    "affiliateTotalEarned": "Total Earned",
+    "affiliatePending": "Pending",
+    "affiliatePaid": "Paid",
+    "monthlyActiveTitle": "Active Subscriptions per Month (last 12 months)"
   },
   "affiliate": {
     "title": "Affiliates",
@@ -443,10 +531,14 @@
     "payNow": "Pay Now",
     "payoutPaidStripe": "Stripe transfer completed successfully!",
     "payoutPaidManual": "Commission marked as paid. Remember to make the transfer manually.",
-    "payoutPayError": "Error processing payment."
+    "payoutPayError": "Error processing payment.",
+    "stripeConnectInfo": "Stripe Connect Payment",
+    "stripeConnectInfoDesc": "Commissions are paid automatically via Stripe when admin processes payment. Enter your Stripe Connect account ID below.",
+    "sectionLabel": "Affiliate"
   },
   "landing": {
     "login": "Login",
+    "noAccount": "Don't have an account?",
     "createAccount": "Create Free Account",
     "heroSubtitle": "Complete management platform for your business. Product catalog, service orders, invoices and more.",
     "freeTrialBadge": "Free for 1 month — cancel anytime",

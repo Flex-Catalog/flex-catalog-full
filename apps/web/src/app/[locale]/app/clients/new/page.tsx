@@ -41,7 +41,7 @@ export default function NewClientPage() {
   const handleCnpjLookup = async () => {
     const cnpj = taxIdValue.replace(/\D/g, '');
     if (cnpj.length !== 14) {
-      setLookupMsg('CNPJ precisa ter 14 dígitos');
+      setLookupMsg(t('clients.cnpjInvalidLength'));
       return;
     }
     setCnpjLoading(true);
@@ -60,9 +60,9 @@ export default function NewClientPage() {
       if (d.municipio) setValue('municipio', d.municipio);
       if (d.uf) setValue('uf', d.uf);
       if (d.cep) setValue('cep', d.cep.replace(/(\d{5})(\d{3})/, '$1-$2'));
-      setLookupMsg('Dados preenchidos com sucesso!');
+      setLookupMsg(t('clients.cnpjFillSuccess'));
     } catch (err: any) {
-      setLookupMsg(err.response?.data?.message || 'Não foi possível consultar o CNPJ.');
+      setLookupMsg(err.response?.data?.message || t('clients.cnpjLookupError'));
     } finally {
       setCnpjLoading(false);
     }
@@ -71,7 +71,7 @@ export default function NewClientPage() {
   const handleCepLookup = async () => {
     const cep = cepValue.replace(/\D/g, '');
     if (cep.length !== 8) {
-      setLookupMsg('CEP precisa ter 8 dígitos');
+      setLookupMsg(t('clients.cepInvalidLength'));
       return;
     }
     setCepLoading(true);
@@ -84,9 +84,9 @@ export default function NewClientPage() {
       if (d.bairro) setValue('bairro', d.bairro);
       if (d.municipio) setValue('municipio', d.municipio);
       if (d.uf) setValue('uf', d.uf);
-      setLookupMsg('Endereço preenchido!');
+      setLookupMsg(t('clients.cepFillSuccess'));
     } catch (err: any) {
-      setLookupMsg(err.response?.data?.message || 'CEP não encontrado.');
+      setLookupMsg(err.response?.data?.message || t('clients.cepLookupError'));
     } finally {
       setCepLoading(false);
     }
@@ -139,7 +139,7 @@ export default function NewClientPage() {
 
         {/* Basic Info */}
         <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-gray-900">Identificação</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t('clients.identification')}</h2>
 
           {/* CNPJ row with lookup button */}
           <div>
@@ -156,7 +156,7 @@ export default function NewClientPage() {
                 disabled={cnpjLoading}
                 className="px-3 py-2 bg-blue-50 border border-blue-300 text-blue-700 rounded-md text-sm hover:bg-blue-100 disabled:opacity-50 whitespace-nowrap"
               >
-                {cnpjLoading ? '...' : 'Buscar CNPJ'}
+                {cnpjLoading ? '...' : t('clients.lookupCnpj')}
               </button>
             </div>
             <p className="text-xs text-gray-400 mt-1">Consulta automática na Receita Federal via BrasilAPI</p>
@@ -206,7 +206,7 @@ export default function NewClientPage() {
                   disabled={cepLoading}
                   className="px-2 py-1 bg-blue-50 border border-blue-300 text-blue-700 rounded-md text-xs hover:bg-blue-100 disabled:opacity-50 whitespace-nowrap"
                 >
-                  {cepLoading ? '...' : 'Buscar'}
+                  {cepLoading ? '...' : t('common.search')}
                 </button>
               </div>
             </div>

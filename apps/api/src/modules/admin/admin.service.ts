@@ -90,4 +90,94 @@ export class AdminService {
 
     return tenants;
   }
+
+  /**
+   * Admin: get all affiliates with aggregated stats (companies referred, commissions).
+   */
+  async getAffiliateStats(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+
+    const [affiliates, total] = await Promise.all([
+      this.prisma.affiliate.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          tenantLinks: true,
+          commissions: true,
+        },
+      }),
+      this.prisma.affiliate.count(),
+    ]);
+
+    return {
+      data: affiliates.map((a: any) => {
+        const totalEarned = a.commissions.reduce(
+          (sum: number, c: any) => sum + c.commissionCents,
+          0,
+        );
+        const pendingCents = a.commissions
+          .filter((c: any) => c.status === 'PENDING')
+          .reduce((sum: number, c: any) => sum + c.commissionCents, 0);
+        const paidCents = a.commissions
+          .filter((c: any) => c.status === 'PAID')
+          .reduce((sum: number, c: any) => sum + c.commissionCents, 0);
+
+        return {
+          id: a.id,
+          email: a.email,
+          name: a.name,
+          status: a.status,
+          type: a.type,
+          activeCompanies: a.tenantLinks.length,
+          totalEarnedCents: totalEarned,
+          pendingCents,
+          paidCents,
+          payoutInfo: (a as any).payoutInfo ?? null,
+          createdAt: a.createdAt,
+        };
+      }),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Admin: monthly revenue from active subscriptions (last 12 months).
+   * Groups tenants by the month of their currentPeriodEnd.
+   */
+  async getMonthlyRevenue() {
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+
+    const tenants = await this.prisma.tenant.findMany({
+      where: {
+        stripeSubscriptionId: { not: null },
+        currentPeriodEnd: { gte: twelveMonthsAgo },
+        status: { in: ['ACTIVE', 'TRIAL'] },
+      },
+      select: { currentPeriodEnd: true, stripeSubscriptionId: true },
+    });
+
+    // Group by YYYY-MM
+    const byMonth: Record<string, number> = {};
+    for (const t of tenants) {
+      if (!t.currentPeriodEnd) continue;
+      const key = t.currentPeriodEnd.toISOString().slice(0, 7);
+      byMonth[key] = (byMonth[key] || 0) + 1;
+    }
+
+    // Build sorted array for the last 12 months
+    const result: { month: string; count: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = d.toISOString().slice(0, 7);
+      result.push({ month: key, count: byMonth[key] || 0 });
+    }
+
+    return result;
+  }
 }

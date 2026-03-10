@@ -1,18 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { api } from '@/lib/api';
 
 interface PayoutForm {
-  method: 'pix' | 'bank' | 'stripe';
-  pixKeyType: 'cpf' | 'cnpj' | 'email' | 'phone' | 'evp';
-  pixKey: string;
-  bankName: string;
-  bankAgency: string;
-  bankAccount: string;
-  bankAccountType: 'corrente' | 'poupanca';
   stripeConnectAccountId: string;
 }
 
@@ -47,6 +40,7 @@ interface AffiliateProfile {
 export default function AffiliateCommissionsPage() {
   const t = useTranslations();
   const ta = useTranslations('affiliate');
+  const locale = useLocale();
 
   const [profile, setProfile] = useState<AffiliateProfile | null>(null);
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -58,10 +52,9 @@ export default function AffiliateCommissionsPage() {
   const [payoutSaving, setPayoutSaving] = useState(false);
   const [payoutError, setPayoutError] = useState('');
 
-  const { register, handleSubmit, watch, reset: resetPayout } = useForm<PayoutForm>({
-    defaultValues: { method: 'pix', pixKeyType: 'cpf', bankAccountType: 'corrente' },
+  const { register, handleSubmit, reset: resetPayout } = useForm<PayoutForm>({
+    defaultValues: { stripeConnectAccountId: '' },
   });
-  const payoutMethod = watch('method');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,17 +67,8 @@ export default function AffiliateCommissionsPage() {
         setProfile(profileRes.data);
         setCommissions(commissionsRes.data.data || commissionsRes.data);
         setTotal(commissionsRes.data.total || 0);
-        if (payoutRes.data) {
-          resetPayout({
-            method: payoutRes.data.method ?? 'pix',
-            pixKeyType: payoutRes.data.pixKeyType ?? 'cpf',
-            pixKey: payoutRes.data.pixKey ?? '',
-            bankName: payoutRes.data.bankName ?? '',
-            bankAgency: payoutRes.data.bankAgency ?? '',
-            bankAccount: payoutRes.data.bankAccount ?? '',
-            bankAccountType: payoutRes.data.bankAccountType ?? 'corrente',
-            stripeConnectAccountId: payoutRes.data.stripeConnectAccountId ?? '',
-          });
+        if (payoutRes.data?.stripeConnectAccountId) {
+          resetPayout({ stripeConnectAccountId: payoutRes.data.stripeConnectAccountId });
         }
       } catch {
         setIsAffiliate(false);
@@ -100,7 +84,10 @@ export default function AffiliateCommissionsPage() {
     setPayoutError('');
     setPayoutSaved(false);
     try {
-      await api.patch('/affiliates/my/payout-info', data);
+      await api.patch('/affiliates/my/payout-info', {
+        method: 'stripe',
+        stripeConnectAccountId: data.stripeConnectAccountId,
+      });
       setPayoutSaved(true);
       setTimeout(() => setPayoutSaved(false), 3000);
     } catch {
@@ -110,20 +97,13 @@ export default function AffiliateCommissionsPage() {
     }
   };
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(cents / 100);
-  };
+  const formatCurrency = (cents: number) =>
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString();
-  };
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString(locale);
 
-  if (loading) {
-    return <div className="p-6">{t('common.loading')}</div>;
-  }
+  if (loading) return <div className="p-6">{t('common.loading')}</div>;
 
   if (!isAffiliate) {
     return (
@@ -163,7 +143,6 @@ export default function AffiliateCommissionsPage() {
             </span>
           </div>
 
-          {/* Linked tenants */}
           {profile.tenantAffiliates.length > 0 && (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <h3 className="text-sm font-medium text-gray-700 mb-2">{ta('linkedCompanies')}</h3>
@@ -171,16 +150,7 @@ export default function AffiliateCommissionsPage() {
                 {profile.tenantAffiliates.map((link) => (
                   <div key={link.id} className="flex items-center justify-between text-sm">
                     <span className="text-gray-900">{link.tenant?.name || '-'}</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        link.type === 'PARTNER'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {link.type === 'PARTNER' ? ta('typePartner') : ta('typeStandard')}
-                      </span>
-                      <span className="text-gray-500">{link.commissionPercent}%</span>
-                    </div>
+                    <span className="text-gray-500">{link.commissionPercent}%</span>
                   </div>
                 ))}
               </div>
@@ -212,9 +182,7 @@ export default function AffiliateCommissionsPage() {
         </div>
 
         {commissions.length === 0 ? (
-          <div className="p-6 text-center text-gray-500 text-sm">
-            {ta('noCommissions')}
-          </div>
+          <div className="p-6 text-center text-gray-500 text-sm">{ta('noCommissions')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -256,7 +224,6 @@ export default function AffiliateCommissionsPage() {
           </div>
         )}
 
-        {/* Pagination */}
         {total > 20 && (
           <div className="p-4 border-t border-gray-200 flex justify-between items-center">
             <button
@@ -266,9 +233,7 @@ export default function AffiliateCommissionsPage() {
             >
               {t('common.previous')}
             </button>
-            <span className="text-sm text-gray-500">
-              {t('common.page')} {page}
-            </span>
+            <span className="text-sm text-gray-500">{t('common.page')} {page}</span>
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={commissions.length < 20}
@@ -280,76 +245,22 @@ export default function AffiliateCommissionsPage() {
         )}
       </div>
 
-      {/* Payout Info */}
+      {/* Stripe Connect Payout */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
         <div className="p-4 border-b border-gray-200">
           <h2 className="font-semibold text-gray-900">{ta('payoutTitle')}</h2>
           <p className="text-sm text-gray-500 mt-0.5">{ta('payoutDescription')}</p>
         </div>
-        <form onSubmit={handleSubmit(onSavePayout)} className="p-4 space-y-4">
-          {/* Method selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{ta('payoutMethod')}</label>
-            <select {...register('method')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-              <option value="pix">Pix</option>
-              <option value="bank">{ta('payoutBankAccount')}</option>
-              <option value="stripe">Stripe Connect</option>
-            </select>
+        <div className="p-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 text-sm text-blue-800">
+            <p className="font-medium mb-1">{ta('stripeConnectInfo')}</p>
+            <p className="text-blue-700">{ta('stripeConnectInfoDesc')}</p>
           </div>
-
-          {/* Pix fields */}
-          {payoutMethod === 'pix' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('pixKeyType')}</label>
-                <select {...register('pixKeyType')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                  <option value="cpf">CPF</option>
-                  <option value="cnpj">CNPJ</option>
-                  <option value="email">E-mail</option>
-                  <option value="phone">{ta('pixPhone')}</option>
-                  <option value="evp">{ta('pixEvp')}</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('pixKey')}</label>
-                <input
-                  {...register('pixKey')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                  placeholder={ta('pixKeyPlaceholder')}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Bank account fields */}
-          {payoutMethod === 'bank' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankName')}</label>
-                <input {...register('bankName')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Ex: Nubank, Itaú, Bradesco" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankAgency')}</label>
-                <input {...register('bankAgency')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="0001" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankAccount')}</label>
-                <input {...register('bankAccount')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="12345-6" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{ta('bankAccountType')}</label>
-                <select {...register('bankAccountType')} className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                  <option value="corrente">{ta('bankAccountCorrente')}</option>
-                  <option value="poupanca">{ta('bankAccountPoupanca')}</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          {/* Stripe Connect */}
-          {payoutMethod === 'stripe' && (
+          <form onSubmit={handleSubmit(onSavePayout)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stripe Connect Account ID</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stripe Connect Account ID
+              </label>
               <input
                 {...register('stripeConnectAccountId')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
@@ -357,19 +268,19 @@ export default function AffiliateCommissionsPage() {
               />
               <p className="text-xs text-gray-400 mt-1">{ta('stripeConnectHint')}</p>
             </div>
-          )}
 
-          {payoutError && <p className="text-sm text-red-600">{payoutError}</p>}
-          {payoutSaved && <p className="text-sm text-green-600">{ta('payoutSaveSuccess')}</p>}
+            {payoutError && <p className="text-sm text-red-600">{payoutError}</p>}
+            {payoutSaved && <p className="text-sm text-green-600">{ta('payoutSaveSuccess')}</p>}
 
-          <button
-            type="submit"
-            disabled={payoutSaving}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-          >
-            {payoutSaving ? t('common.saving') : t('common.save')}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={payoutSaving}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {payoutSaving ? t('common.saving') : t('common.save')}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { api } from '@/lib/api';
 
 interface PendingCommission {
@@ -31,6 +31,7 @@ interface PendingCommission {
 export default function AdminCommissionsPage() {
   const t = useTranslations();
   const ta = useTranslations('affiliate');
+  const locale = useLocale();
 
   const [commissions, setCommissions] = useState<PendingCommission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,9 +70,9 @@ export default function AdminCommissionsPage() {
   };
 
   const formatCurrency = (cents: number) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
+    new Intl.NumberFormat(locale, { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('pt-BR');
+  const formatDate = (d: string) => new Date(d).toLocaleDateString(locale);
 
   const renderPayoutBadge = (info: PendingCommission['payoutInfo']) => {
     if (!info) return <span className="text-xs text-red-500 font-medium">{ta('payoutNotSet')}</span>;

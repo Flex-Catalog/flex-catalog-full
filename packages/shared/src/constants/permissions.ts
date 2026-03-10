@@ -9,6 +9,7 @@ export const PERMISSIONS = {
   CATEGORY_READ: 'CATEGORY_READ',
   CATEGORY_WRITE: 'CATEGORY_WRITE',
   PLATFORM_ADMIN: 'PLATFORM_ADMIN',
+  SUPPORT_MANAGE: 'SUPPORT_MANAGE',
 } as const;
 
 export type Permission = keyof typeof PERMISSIONS;
@@ -19,6 +20,7 @@ export const ROLES = {
   OPERATOR: 'OPERATOR',
   READER: 'READER',
   AFFILIATE: 'AFFILIATE',
+  ATENDENTE: 'ATENDENTE',
 } as const;
 
 export type Role = keyof typeof ROLES;
@@ -35,6 +37,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'CATEGORY_READ',
     'CATEGORY_WRITE',
     'PLATFORM_ADMIN',
+    'SUPPORT_MANAGE',
   ],
   TENANT_ADMIN: [
     'PRODUCT_READ',
@@ -57,4 +60,5 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
   READER: ['PRODUCT_READ', 'INVOICE_READ', 'CATEGORY_READ'],
   AFFILIATE: [],
+  ATENDENTE: ['SUPPORT_MANAGE'],
 };

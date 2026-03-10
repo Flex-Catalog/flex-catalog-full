@@ -40,7 +40,7 @@ export default function NewProductPage() {
       name: '',
       sku: '',
       priceCents: 0,
-      currency: 'USD',
+      currency: 'BRL',
       isActive: true,
       attributes: [],
       ncm: '',
@@ -183,8 +183,8 @@ export default function NewProductPage() {
               {...register('currency')}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="USD">USD</option>
               <option value="BRL">BRL</option>
+              <option value="USD">USD</option>
               <option value="EUR">EUR</option>
             </select>
           </div>
@@ -254,8 +254,8 @@ export default function NewProductPage() {
 
         {/* Fiscal Codes */}
         <div className="border-t pt-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Códigos Fiscais NF-e</h3>
-          <p className="text-xs text-gray-500 mb-3">Necessários para emissão de Nota Fiscal de Produto (NF-e) pela SEFAZ.</p>
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('products.fiscalCodesTitle')}</h3>
+          <p className="text-xs text-gray-500 mb-3">{t('products.fiscalCodesDesc')}</p>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="block text-xs font-medium text-gray-700 mb-1">NCM — Nomenclatura Comum do Mercosul</label>

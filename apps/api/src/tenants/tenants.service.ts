@@ -255,6 +255,29 @@ export class TenantsService {
     return { success: true };
   }
 
+  async getDocumentSettings(tenantId: string): Promise<Record<string, unknown>> {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
+    const defaults: Record<string, unknown> = {
+      showClientTaxId: true,
+      showBoatName: true,
+      showPaymentTerms: true,
+      showSignatureLine: true,
+      showObservations: true,
+      showClientAddress: true,
+    };
+    return { ...defaults, ...((tenant as any)?.documentSettings ?? {}) };
+  }
+
+  async updateDocumentSettings(tenantId: string, settings: Record<string, unknown>) {
+    const existing = await this.getDocumentSettings(tenantId);
+    const merged = { ...existing, ...settings };
+    await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { documentSettings: merged as any },
+    });
+    return merged;
+  }
+
   private focusNfeUploadCertificate(
     hostname: string,
     cnpj: string,

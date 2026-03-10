@@ -119,7 +119,7 @@ export default function ProductEditPage() {
   });
 
   if (isLoading) return <div className="text-gray-500">{t('common.loading')}</div>;
-  if (!product) return <div className="text-red-500">Produto não encontrado.</div>;
+  if (!product) return <div className="text-red-500">{t('products.notFound')}</div>;
 
   return (
     <div className="max-w-2xl">
@@ -134,7 +134,7 @@ export default function ProductEditPage() {
       </div>
 
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">{error}</div>}
-      {saved && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-sm">Salvo com sucesso!</div>}
+      {saved && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-sm">{t('common.savedSuccess')}</div>}
 
       <form onSubmit={handleSubmit((d) => updateMutation.mutate(d))} className="space-y-6 bg-white p-6 rounded-lg shadow">
 
@@ -190,8 +190,8 @@ export default function ProductEditPage() {
 
         {/* Fiscal Codes */}
         <div className="border-t pt-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Códigos Fiscais NF-e</h3>
-          <p className="text-xs text-gray-500 mb-4">Necessários para emissão de Nota Fiscal de Produto (NF-e) pela SEFAZ.</p>
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('products.fiscalCodesTitle')}</h3>
+          <p className="text-xs text-gray-500 mb-4">{t('products.fiscalCodesDesc')}</p>
 
           <div className="grid grid-cols-2 gap-4">
             {/* NCM with live search */}

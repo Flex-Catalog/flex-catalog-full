@@ -59,6 +59,7 @@ export class SupportController {
       tenantId: user.tenantId,
       userId: user.id,
       senderName: user.name,
+      companyName: (user as any).tenantName || user.name,
       category: dto.category,
       subject: dto.subject,
       message: dto.message,
@@ -100,7 +101,7 @@ export class SupportController {
   // ---- Admin endpoints ----
 
   @Get('admin/tickets')
-  @RequirePermissions('PLATFORM_ADMIN')
+  @RequirePermissions('SUPPORT_MANAGE')
   @SkipTenantCheck()
   @ApiOperation({ summary: 'List all tickets (admin)' })
   async getAllTickets(
@@ -112,7 +113,7 @@ export class SupportController {
   }
 
   @Get('admin/tickets/:id')
-  @RequirePermissions('PLATFORM_ADMIN')
+  @RequirePermissions('SUPPORT_MANAGE')
   @SkipTenantCheck()
   @ApiOperation({ summary: 'Get ticket details (admin)' })
   async getAdminTicket(@Param('id') id: string) {
@@ -120,7 +121,7 @@ export class SupportController {
   }
 
   @Post('admin/tickets/:id/messages')
-  @RequirePermissions('PLATFORM_ADMIN')
+  @RequirePermissions('SUPPORT_MANAGE')
   @SkipTenantCheck()
   @ApiOperation({ summary: 'Admin reply to a ticket' })
   async adminReply(
@@ -138,7 +139,7 @@ export class SupportController {
   }
 
   @Patch('admin/tickets/:id/status')
-  @RequirePermissions('PLATFORM_ADMIN')
+  @RequirePermissions('SUPPORT_MANAGE')
   @SkipTenantCheck()
   @ApiOperation({ summary: 'Update ticket status (admin)' })
   async updateStatus(

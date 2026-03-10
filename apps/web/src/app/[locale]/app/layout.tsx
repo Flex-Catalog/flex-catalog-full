@@ -11,6 +11,16 @@ import { PaymentWall } from '@/components/PaymentWall';
 
 const BLOCKED_STATUSES = ['PENDING_PAYMENT', 'PAST_DUE', 'CANCELED'];
 
+// Nav items shown only to ATENDENTE users (support staff)
+const atendenteNavItems = [
+  {
+    key: 'support',
+    href: '/app/support',
+    icon: 'M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z',
+    translationKey: 'support.title',
+  },
+];
+
 // Nav items shown only to affiliates (limited view)
 const affiliateNavItems = [
   {
@@ -118,6 +128,12 @@ const navItems = [
     icon: 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
     translationKey: 'nav.settings',
   },
+  {
+    key: 'settings-documents',
+    href: '/app/settings/documents',
+    icon: 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
+    translationKey: 'nav.documentSettings',
+  },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -205,6 +221,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isAlsoAffiliate = !isPureAffiliate && user?.isAffiliate === true;
   // legacy alias
   const isAffiliate = isPureAffiliate;
+  // isAtendente: support staff that can only see/respond tickets
+  const isAtendente = !isPureAffiliate && user?.roles?.includes('ATENDENTE') && !user?.roles?.includes('PLATFORM_ADMIN');
 
   // Show payment wall if tenant subscription is blocked (affiliates are exempt)
   if (blocked && user && !isPureAffiliate) {
@@ -259,7 +277,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
-            {(isAffiliate ? affiliateNavItems : navItems).map((item) => {
+            {/* Atendente badge */}
+            {isAtendente && (
+              <div className="mx-1 mb-3 px-3 py-2 bg-teal-50 border border-teal-100 rounded-xl">
+                <p className="text-xs font-semibold text-teal-700">{t('nav.atendenteRole')}</p>
+                <p className="text-xs text-teal-500 mt-0.5">{t('nav.atendenteDesc')}</p>
+              </div>
+            )}
+
+            {(isAffiliate ? affiliateNavItems : isAtendente ? atendenteNavItems : navItems).map((item) => {
               const active = isActive(item.href);
               return (
                 <Link
@@ -284,7 +310,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {isAlsoAffiliate && (
               <>
                 <div className="mx-1 mt-2 mb-1 border-t border-gray-100 pt-2">
-                  <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Filiado</p>
+                  <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t('affiliate.sectionLabel')}</p>
                 </div>
                 <Link
                   href="/app/affiliates/commissions"
@@ -333,7 +359,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
-                Admin
+                {t('nav.admin')}
               </Link>
               </>
             )}

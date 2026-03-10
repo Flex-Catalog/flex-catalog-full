@@ -20,6 +20,7 @@ model Tenant {
   currentPeriodEnd     DateTime?
   trialEndsAt          DateTime?
   fiscalConfig         Json?     // { focusNfeToken, ambiente, razaoSocial, nomeFantasia, inscricaoEstadual, inscricaoMunicipal, codigoMunicipio, regimeTributario, itemListaServico, aliquotaISS, cnaeCode, logradouro, numero, complemento, bairro, municipio, uf, cep }
+  documentSettings     Json?     // { showClientTaxId, showBoatName, showPaymentTerms, showSignatureLine, showObservations, showClientAddress }
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
