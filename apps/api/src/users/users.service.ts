@@ -53,6 +53,13 @@ export class UsersService {
     });
   }
 
+  async findAllByEmailGlobal(email: string) {
+    return this.prisma.user.findMany({
+      where: { email: email.toLowerCase() },
+      include: { tenant: true },
+    });
+  }
+
   async findAllByTenant(tenantId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
 

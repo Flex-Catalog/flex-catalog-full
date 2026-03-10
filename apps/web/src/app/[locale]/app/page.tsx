@@ -6,6 +6,47 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import Cookies from 'js-cookie';
 
+// ─── Fiscal Setup Banner ──────────────────────────────────────────────────────
+
+function FiscalSetupBanner() {
+  const t = useTranslations('dashboard');
+  const [missing, setMissing] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    api.get('/tenants/fiscal-config').then((res) => {
+      const fiscal = res.data ?? {};
+      const m: string[] = [];
+      if (!fiscal.inscricaoMunicipal) m.push('Inscrição Municipal');
+      if (!fiscal.codigoMunicipio) m.push('Código IBGE do Município');
+      if (!fiscal.logradouro || !fiscal.municipio) m.push('Endereço da empresa');
+      setMissing(m);
+    }).catch(() => setMissing(null));
+  }, []);
+
+  if (!missing || missing.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+      <div className="flex-shrink-0 mt-0.5">
+        <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-amber-800">{t('fiscalIncompleteTitle')}</p>
+        <p className="text-sm text-amber-700 mt-0.5">{t('fiscalIncompleteDesc')}</p>
+        <p className="text-xs text-amber-600 mt-1">{t('fiscalIncompleteMissing', { fields: missing.join(', ') })}</p>
+      </div>
+      <Link
+        href="/app/settings/fiscal"
+        className="flex-shrink-0 text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+      >
+        {t('fiscalIncompleteAction')}
+      </Link>
+    </div>
+  );
+}
+
 // ─── Company Dashboard ───────────────────────────────────────────────────────
 
 const quickLinks = [
@@ -91,6 +132,7 @@ function CompanyDashboard() {
   const t = useTranslations();
   return (
     <div>
+      <FiscalSetupBanner />
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t('nav.dashboard')}</h1>
         <p className="mt-1 text-gray-500">{t('dashboard.welcome')}</p>
@@ -123,7 +165,7 @@ function CompanyDashboard() {
 
 // ─── Affiliate Dashboard ──────────────────────────────────────────────────────
 
-function AffiliateDashboard({ userName }: { userName: string }) {
+function AffiliateDashboard() {
   const t = useTranslations();
   const [profile, setProfile] = useState<any>(null);
   const [commissions, setCommissions] = useState<any[]>([]);
@@ -310,7 +352,7 @@ export default function DashboardPage() {
   }
 
   if (user?.roles?.includes('AFFILIATE')) {
-    return <AffiliateDashboard userName={user.name} />;
+    return <AffiliateDashboard />;
   }
 
   return <CompanyDashboard />;

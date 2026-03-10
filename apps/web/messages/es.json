@@ -30,7 +30,11 @@
     "reportsDesc": "Visualiza métricas e informes",
     "supportDesc": "Abre y sigue tickets de soporte",
     "affiliatesDesc": "Gestiona afiliados y comisiones",
-    "serviceOrdersDesc": "Crea y gestiona órdenes de servicio"
+    "serviceOrdersDesc": "Crea y gestiona órdenes de servicio",
+    "fiscalIncompleteTitle": "Configuración fiscal incompleta",
+    "fiscalIncompleteDesc": "Para emitir NFS-e automáticamente, completa los datos fiscales de tu empresa.",
+    "fiscalIncompleteAction": "Ir a Configuración Fiscal",
+    "fiscalIncompleteMissing": "Faltan: {fields}"
   },
   "validation": {
     "required": "Campo obligatorio",
@@ -46,6 +50,21 @@
     "required": "Autenticación requerida",
     "forbidden": "Acceso denegado",
     "invalidCredentials": "Credenciales inválidas",
+    "forgotPassword": "Olvidé mi contraseña",
+    "forgotPasswordTitle": "Restablecer contraseña",
+    "forgotPasswordDesc": "Ingresa tu email y te enviaremos un enlace para restablecer tu contraseña.",
+    "forgotPasswordSent": "Si ese email está registrado, recibirás el enlace en breve.",
+    "forgotPasswordButton": "Enviar enlace",
+    "backToLogin": "Volver al inicio de sesión",
+    "resetPasswordTitle": "Nueva contraseña",
+    "resetPasswordDesc": "Crea una nueva contraseña para tu cuenta.",
+    "resetPasswordButton": "Guardar nueva contraseña",
+    "resetPasswordSuccess": "¡Contraseña actualizada! Inicia sesión con tu nueva contraseña.",
+    "resetPasswordInvalid": "Enlace inválido o expirado. Solicita uno nuevo.",
+    "newPassword": "Nueva contraseña",
+    "confirmPassword": "Confirmar contraseña",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "passwordMinLength": "Mínimo 8 caracteres",
     "loginSuccess": "Inicio de sesión exitoso",
     "accountType": "Tipo de Cuenta",
     "accountTypeCompany": "Empresa",
@@ -251,7 +270,9 @@
     "errorStart": "Error al iniciar",
     "errorComplete": "Error al completar",
     "errorCancel": "Error al cancelar",
-    "errorOpenDoc": "Error al abrir documento."
+    "errorOpenDoc": "Error al abrir documento.",
+    "saveAsClient": "Guardar como cliente",
+    "useAsName": "Usar como nombre"
   },
   "nav": {
     "dashboard": "Panel",
@@ -374,7 +395,7 @@
     "docShowObservations": "Mostrar observaciones",
     "docShowObservationsDesc": "Incluye el campo de notas/observaciones en la NFS-e.",
     "docShowClientAddress": "Mostrar dirección del cliente",
-    "docShowClientAddressDesc": "Incluye la dirección del cliente en la NFS-e."
+    "docShowClientAddressDesc": "Incluye la dirección del cliente en la NFS-e.",
     "certTitle": "Certificado Digital A1 (e-CNPJ)",
     "certDesc": "Necesario para emitir NFS-e. Cargue el archivo .pfx de su certificado digital A1. Se envía directamente al sistema de emisión — no necesita acceder a ningún otro portal.",
     "certFile": "Archivo del Certificado (.pfx o .p12)",

@@ -56,6 +56,8 @@ export default function ServiceOrdersPage() {
   const [endTime, setEndTime] = useState(new Date().toISOString().slice(0, 16));
   const [clientSearch, setClientSearch] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [cnpjLoading, setCnpjLoading] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
   const [orderItems, setOrderItems] = useState<Array<{ productId?: string; name: string; qty: number; unitCents: number; totalCents: number }>>([]);
   const [productComboSearch, setProductComboSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -212,6 +214,34 @@ export default function ServiceOrdersPage() {
       setActionError(`${t('serviceOrders.errorCancel')}: ${msg}`);
     },
   });
+
+  const handleCnpjBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    if (raw.length !== 14) return;
+    setCnpjLoading(true);
+    try {
+      const res = await api.get(`/clients/lookup/cnpj/${raw}`);
+      const d = res.data;
+      if (d?.razaoSocial) {
+        setValue('companyName', d.nomeFantasia || d.razaoSocial);
+      }
+    } catch { /* silently ignore */ } finally {
+      setCnpjLoading(false);
+    }
+  };
+
+  const handleCreateClientInline = async () => {
+    const name = (document.getElementById('so-companyName') as HTMLInputElement)?.value?.trim();
+    const taxId = (document.getElementById('so-companyTaxId') as HTMLInputElement)?.value?.trim();
+    if (!name) return;
+    setCreatingClient(true);
+    try {
+      await api.post('/clients', { name, taxId: taxId || undefined });
+      queryClient.invalidateQueries({ queryKey: ['clients-search'] });
+    } catch { /* ignore duplicate */ } finally {
+      setCreatingClient(false);
+    }
+  };
 
   const onSubmit = (data: CreateOrderForm) => {
     setError('');
@@ -533,14 +563,14 @@ export default function ServiceOrdersPage() {
                   value={clientSearch}
                   onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true); }}
                   onFocus={() => clientSearch.length >= 2 && setShowClientDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowClientDropdown(false), 150)}
+                  onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
                   placeholder="Digite nome ou CNPJ para buscar..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   autoComplete="off"
                 />
-                {showClientDropdown && clientResults.length > 0 && (
+                {showClientDropdown && clientSearch.trim().length >= 2 && (
                   <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {clientResults.map((c) => (
+                    {clientResults.length > 0 ? clientResults.map((c) => (
                       <button
                         key={c.id}
                         type="button"
@@ -556,7 +586,21 @@ export default function ServiceOrdersPage() {
                         {c.tradeName && <span className="text-gray-500 ml-1">({c.tradeName})</span>}
                         {c.taxId && <span className="text-gray-400 ml-2 text-xs font-mono">{c.taxId}</span>}
                       </button>
-                    ))}
+                    )) : (
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        {t('clients.notFound')} &nbsp;
+                        <button
+                          type="button"
+                          onMouseDown={() => {
+                            setValue('companyName', clientSearch);
+                            setShowClientDropdown(false);
+                          }}
+                          className="text-blue-600 hover:underline font-medium"
+                        >
+                          {t('serviceOrders.useAsName')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -567,21 +611,40 @@ export default function ServiceOrdersPage() {
                     {t('serviceOrders.company')} *
                   </label>
                   <input
+                    id="so-companyName"
                     {...register('companyName', { required: true })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     placeholder="Empresa solicitante"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                     CNPJ / Tax ID
+                    {cnpjLoading && <span className="text-xs text-gray-400">{t('common.loading')}</span>}
                   </label>
                   <input
+                    id="so-companyTaxId"
                     {...register('companyTaxId')}
+                    onBlur={handleCnpjBlur}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     placeholder="00.000.000/0001-00"
                   />
                 </div>
+              </div>
+
+              {/* Save as client button */}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleCreateClientInline}
+                  disabled={creatingClient}
+                  className="text-xs text-blue-600 hover:text-blue-700 disabled:opacity-50 flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  {creatingClient ? t('common.loading') : t('serviceOrders.saveAsClient')}
+                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

@@ -30,7 +30,11 @@
     "reportsDesc": "View metrics and reports",
     "supportDesc": "Open and track support tickets",
     "affiliatesDesc": "Manage affiliates and commissions",
-    "serviceOrdersDesc": "Create and manage service orders"
+    "serviceOrdersDesc": "Create and manage service orders",
+    "fiscalIncompleteTitle": "Incomplete fiscal settings",
+    "fiscalIncompleteDesc": "To automatically issue NFS-e, fill in your company's fiscal information.",
+    "fiscalIncompleteAction": "Go to Fiscal Settings",
+    "fiscalIncompleteMissing": "Missing: {fields}"
   },
   "validation": {
     "required": "Required field",
@@ -46,6 +50,21 @@
     "required": "Authentication required",
     "forbidden": "Access denied",
     "invalidCredentials": "Invalid credentials",
+    "forgotPassword": "Forgot my password",
+    "forgotPasswordTitle": "Reset password",
+    "forgotPasswordDesc": "Enter your email and we will send you a link to reset your password.",
+    "forgotPasswordSent": "If that email is registered, you will receive a reset link shortly.",
+    "forgotPasswordButton": "Send link",
+    "backToLogin": "Back to login",
+    "resetPasswordTitle": "New password",
+    "resetPasswordDesc": "Create a new password for your account.",
+    "resetPasswordButton": "Save new password",
+    "resetPasswordSuccess": "Password updated! Log in with your new password.",
+    "resetPasswordInvalid": "Invalid or expired link. Please request a new one.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordMinLength": "Minimum 8 characters",
     "loginSuccess": "Login successful",
     "accountType": "Account Type",
     "accountTypeCompany": "Company",
@@ -251,7 +270,9 @@
     "errorStart": "Error starting",
     "errorComplete": "Error completing",
     "errorCancel": "Error canceling",
-    "errorOpenDoc": "Error opening document."
+    "errorOpenDoc": "Error opening document.",
+    "saveAsClient": "Save as client",
+    "useAsName": "Use as name"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -374,7 +395,7 @@
     "docShowObservations": "Show observations",
     "docShowObservationsDesc": "Includes the notes/observations field on the NFS-e.",
     "docShowClientAddress": "Show client address",
-    "docShowClientAddressDesc": "Includes the client's address on the NFS-e."
+    "docShowClientAddressDesc": "Includes the client's address on the NFS-e.",
     "certTitle": "Digital Certificate A1 (e-CNPJ)",
     "certDesc": "Required to issue NFS-e. Upload your .pfx digital certificate file. It is sent directly to the issuing system — no need to access any other portal.",
     "certFile": "Certificate File (.pfx or .p12)",

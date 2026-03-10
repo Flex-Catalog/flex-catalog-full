@@ -56,6 +56,18 @@ export class EmailService {
     // });
   }
 
+  async sendPasswordResetEmail(email: string, token: string, locale = 'pt'): Promise<void> {
+    const resetUrl = `${this.frontendUrl}/${locale}/reset-password?token=${token}`;
+    this.logger.log(`[EMAIL] Password reset to ${email}: ${resetUrl}`);
+    // TODO: Replace with actual email sending
+    // await this.transporter.sendMail({
+    //   from: this.fromEmail,
+    //   to: email,
+    //   subject: 'Redefinição de senha - FlexCatalog',
+    //   html: `<p>Clique <a href="${resetUrl}">aqui</a> para redefinir sua senha. O link expira em 1 hora.</p>`,
+    // });
+  }
+
   async sendTicketReplyNotification(to: string, subject: string, ticketId: string, locale = 'pt'): Promise<void> {
     const ticketUrl = `${this.frontendUrl}/${locale}/app/support/tickets/${ticketId}`;
     this.logger.log(

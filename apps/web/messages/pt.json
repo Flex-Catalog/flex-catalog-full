@@ -30,7 +30,11 @@
     "reportsDesc": "Visualize métricas e relatórios",
     "supportDesc": "Abra e acompanhe chamados",
     "affiliatesDesc": "Gerencie afiliados e comissões",
-    "serviceOrdersDesc": "Crie e gerencie ordens de serviço"
+    "serviceOrdersDesc": "Crie e gerencie ordens de serviço",
+    "fiscalIncompleteTitle": "Configurações fiscais incompletas",
+    "fiscalIncompleteDesc": "Para emitir NFS-e automaticamente, preencha os dados fiscais da sua empresa.",
+    "fiscalIncompleteAction": "Ir para Configurações Fiscais",
+    "fiscalIncompleteMissing": "Faltando: {fields}"
   },
   "validation": {
     "required": "Campo obrigatório",
@@ -46,6 +50,21 @@
     "required": "Autenticação necessária",
     "forbidden": "Acesso negado",
     "invalidCredentials": "Credenciais inválidas",
+    "forgotPassword": "Esqueci minha senha",
+    "forgotPasswordTitle": "Redefinir senha",
+    "forgotPasswordDesc": "Informe seu email e enviaremos um link para redefinir sua senha.",
+    "forgotPasswordSent": "Se esse email estiver cadastrado, você receberá o link em breve.",
+    "forgotPasswordButton": "Enviar link",
+    "backToLogin": "Voltar para o login",
+    "resetPasswordTitle": "Nova senha",
+    "resetPasswordDesc": "Crie uma nova senha para sua conta.",
+    "resetPasswordButton": "Salvar nova senha",
+    "resetPasswordSuccess": "Senha atualizada! Faça login com sua nova senha.",
+    "resetPasswordInvalid": "Link inválido ou expirado. Solicite um novo.",
+    "newPassword": "Nova senha",
+    "confirmPassword": "Confirmar senha",
+    "passwordMismatch": "As senhas não coincidem",
+    "passwordMinLength": "Mínimo de 8 caracteres",
     "loginSuccess": "Login realizado com sucesso",
     "accountType": "Tipo de Conta",
     "accountTypeCompany": "Empresa",
@@ -251,7 +270,9 @@
     "errorStart": "Erro ao iniciar",
     "errorComplete": "Erro ao concluir",
     "errorCancel": "Erro ao cancelar",
-    "errorOpenDoc": "Erro ao abrir documento."
+    "errorOpenDoc": "Erro ao abrir documento.",
+    "saveAsClient": "Salvar como cliente",
+    "useAsName": "Usar como nome"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -374,7 +395,7 @@
     "docShowObservations": "Exibir observações",
     "docShowObservationsDesc": "Inclui o campo de observações/notas adicionais na NFS-e.",
     "docShowClientAddress": "Exibir endereço do cliente",
-    "docShowClientAddressDesc": "Inclui o endereço do tomador do serviço na NFS-e."
+    "docShowClientAddressDesc": "Inclui o endereço do tomador do serviço na NFS-e.",
     "certTitle": "Certificado Digital A1 (e-CNPJ)",
     "certDesc": "Necessário para emitir NFS-e. Faça upload do arquivo .pfx do seu certificado digital A1. Ele é enviado direto para o sistema de emissão — você não precisa acessar nenhum outro portal.",
     "certFile": "Arquivo do Certificado (.pfx ou .p12)",

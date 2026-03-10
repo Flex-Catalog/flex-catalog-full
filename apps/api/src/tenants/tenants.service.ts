@@ -223,22 +223,35 @@ export class TenantsService {
     };
   }
 
-  async uploadCertificate(tenantId: string, fileBuffer: Buffer, senha: string): Promise<{ success: boolean }> {
+  async uploadCertificate(tenantId: string, fileBuffer: Buffer, senha: string): Promise<{ success: boolean; sentToFocusNfe: boolean }> {
     const token = this.configService.get<string>('FOCUS_NFE_TOKEN');
-    if (!token) throw new Error('Token Focus NFe não configurado na plataforma');
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { taxId: true },
     });
-    if (!tenant?.taxId) throw new Error('CNPJ não configurado para este tenant');
 
-    const cnpj = tenant.taxId.replace(/[.\-\/\s]/g, '');
-    const ambiente = this.configService.get<string>('FOCUS_NFE_AMBIENTE') ?? 'homologacao';
-    const hostname = ambiente === 'producao' ? 'api.focusnfe.com.br' : 'homologacao.focusnfe.com.br';
+    let sentToFocusNfe = false;
 
-    await this.focusNfeUploadCertificate(hostname, cnpj, token, fileBuffer, senha);
+    // Try to send to Focus NFe if token + CNPJ are available
+    if (token && tenant?.taxId) {
+      const cnpj = tenant.taxId.replace(/[.\-\/\s]/g, '');
+      const ambiente = this.configService.get<string>('FOCUS_NFE_AMBIENTE') ?? 'homologacao';
+      const hostname = ambiente === 'producao' ? 'api.focusnfe.com.br' : 'homologacao.focusnfe.com.br';
 
+      try {
+        await this.focusNfeUploadCertificate(hostname, cnpj, token, fileBuffer, senha);
+        sentToFocusNfe = true;
+        this.logger.log(`Certificado digital enviado para Focus NFe: CNPJ ${cnpj}`);
+      } catch (err: any) {
+        this.logger.warn(`Falha ao enviar certificado para Focus NFe: ${err.message}`);
+        // Continue — still save locally so user doesn't lose their upload
+      }
+    } else {
+      this.logger.warn(`Certificado salvo localmente (Focus NFe token ${token ? 'ok' : 'ausente'}, CNPJ ${tenant?.taxId ? 'ok' : 'ausente'})`);
+    }
+
+    // Always store the certificate in DB (as base64) so it's available when Focus NFe is configured
     const existing = (await this.getFiscalConfig(tenantId)) ?? {};
     await this.prisma.tenant.update({
       where: { id: tenantId },
@@ -247,12 +260,14 @@ export class TenantsService {
           ...existing,
           certificateUploaded: true,
           certificateUploadedAt: new Date().toISOString(),
+          certificateBase64: fileBuffer.toString('base64'),
+          certificateSenha: senha,
+          sentToFocusNfe,
         } as any,
       },
     });
 
-    this.logger.log(`Certificado digital enviado para Focus NFe: CNPJ ${cnpj}`);
-    return { success: true };
+    return { success: true, sentToFocusNfe };
   }
 
   async getDocumentSettings(tenantId: string): Promise<Record<string, unknown>> {

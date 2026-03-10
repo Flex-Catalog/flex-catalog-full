@@ -5,6 +5,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -75,5 +76,29 @@ export class AuthController {
   async resendVerification(@CurrentUser('id') userId: string) {
     await this.authService.resendVerification(userId);
     return { message: 'Verification email sent' };
+  }
+
+  @Post('forgot-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Request password reset link' })
+  async forgotPassword(@Body('email') email: string) {
+    await this.authService.forgotPassword(email);
+    return { message: 'If the email exists, a reset link was sent' };
+  }
+
+  @Post('reset-password')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password using token' })
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('password') password: string,
+  ) {
+    if (!token || !password || password.length < 8) {
+      throw new BadRequestException('Token and password (min 8 chars) required');
+    }
+    await this.authService.resetPassword(token, password);
+    return { message: 'Password updated successfully' };
   }
 }

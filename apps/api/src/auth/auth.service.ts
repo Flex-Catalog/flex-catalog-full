@@ -277,18 +277,22 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResponse> {
-    const user = await this.usersService.findByEmailGlobal(dto.email);
+    // Fetch all users with this email across all tenants (same email can exist in multiple tenants)
+    const candidates = await this.usersService.findAllByEmailGlobal(dto.email);
+    if (!candidates.length) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Find the first active user whose password matches
+    let user: (typeof candidates)[0] | null = null;
+    for (const candidate of candidates) {
+      if (!candidate.isActive) continue;
+      const valid = await argon2.verify(candidate.passwordHash, dto.password);
+      if (valid) { user = candidate; break; }
+    }
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isPasswordValid = await argon2.verify(user.passwordHash, dto.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
     }
 
     const tenant = await this.tenantsService.findById(user.tenantId);
@@ -408,6 +412,53 @@ export class AuthService {
     });
 
     await this.emailService.sendVerificationEmail(user.email, verificationToken);
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    // Always return success to avoid user enumeration
+    const user = await this.usersService.findByEmailGlobal(email);
+    if (!user) return;
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date();
+    resetExpires.setHours(resetExpires.getHours() + 1);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: resetToken,
+        passwordResetExpires: resetExpires,
+      } as any,
+    });
+
+    await this.emailService.sendPasswordResetEmail(email, resetToken);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: { passwordResetToken: token } as any,
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const expires = (user as any).passwordResetExpires as Date | null;
+    if (!expires || expires < new Date()) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    const passwordHash = await argon2.hash(newPassword);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+        refreshTokenHash: null, // invalidate all sessions
+      } as any,
+    });
   }
 
   private async generateTokens(payload: TokenPayload): Promise<{ accessToken: string; refreshToken: string }> {
