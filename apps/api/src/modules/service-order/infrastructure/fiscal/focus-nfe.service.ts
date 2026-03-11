@@ -283,6 +283,94 @@ export class FocusNfeService {
   }
 
   /**
+   * Garante que a empresa (CNPJ) está cadastrada no Focus NFe antes de emitir documentos.
+   * Focus NFe retorna HTTP 401 se o CNPJ não estiver cadastrado na conta.
+   *
+   * Tenta GET primeiro; se 404, faz POST para criar; se já existe, faz PUT para atualizar.
+   */
+  async ensureEmpresaRegistrada(params: {
+    token: string;
+    ambiente: 'homologacao' | 'producao';
+    cnpj: string;           // somente dígitos
+    razaoSocial: string;
+    fiscal: FiscalConfig;
+  }): Promise<{ success: boolean; error?: string }> {
+    const hostname = this.getHostname(params.ambiente);
+    const cnpj = stripFiscalId(params.cnpj);
+
+    const empresaBody: Record<string, unknown> = {
+      nome: params.razaoSocial,
+      ...(params.fiscal.nomeFantasia ? { nome_fantasia: params.fiscal.nomeFantasia } : {}),
+      ...(params.fiscal.email ? { email: params.fiscal.email } : {}),
+      ...(params.fiscal.telefone ? { telefone: params.fiscal.telefone } : {}),
+      inscricao_municipal: params.fiscal.inscricaoMunicipal ?? '',
+      codigo_municipio: params.fiscal.codigoMunicipio ?? '',
+      regime_tributario: params.fiscal.regimeTributario ?? 1,
+      ...(params.fiscal.logradouro ? { logradouro: params.fiscal.logradouro } : {}),
+      ...(params.fiscal.numero ? { numero: params.fiscal.numero } : {}),
+      ...(params.fiscal.complemento ? { complemento: params.fiscal.complemento } : {}),
+      ...(params.fiscal.bairro ? { bairro: params.fiscal.bairro } : {}),
+      ...(params.fiscal.municipio ? { municipio: params.fiscal.municipio } : {}),
+      ...(params.fiscal.uf ? { uf: params.fiscal.uf } : {}),
+      ...(params.fiscal.cep ? { cep: stripCep(params.fiscal.cep) } : {}),
+    };
+
+    try {
+      // 1. Check if empresa already exists
+      const getRes = await this.httpRequest(hostname, `/v2/empresas/${cnpj}`, 'GET', params.token);
+
+      if (getRes.statusCode === 200) {
+        // Already registered – update to keep data fresh
+        const putRes = await this.httpRequest(
+          hostname,
+          `/v2/empresas/${cnpj}`,
+          'PUT',
+          params.token,
+          empresaBody,
+        );
+        if (putRes.statusCode === 200 || putRes.statusCode === 201) {
+          this.logger.log(`Empresa ${cnpj} atualizada no Focus NFe`);
+          return { success: true };
+        }
+        const errMsg = putRes.body?.mensagem || `Erro HTTP ${putRes.statusCode} ao atualizar empresa`;
+        this.logger.warn(`Focus NFe PUT empresa: ${errMsg}`);
+        return { success: false, error: errMsg };
+      }
+
+      if (getRes.statusCode === 404) {
+        // Not registered – create now
+        const postBody = { cnpj, ...empresaBody };
+        const postRes = await this.httpRequest(
+          hostname,
+          `/v2/empresas`,
+          'POST',
+          params.token,
+          postBody,
+        );
+        if (postRes.statusCode === 200 || postRes.statusCode === 201) {
+          this.logger.log(`Empresa ${cnpj} cadastrada no Focus NFe`);
+          return { success: true };
+        }
+        const errMsg =
+          postRes.body?.erros?.[0]?.mensagem ||
+          postRes.body?.mensagem ||
+          `Erro HTTP ${postRes.statusCode} ao cadastrar empresa`;
+        this.logger.warn(`Focus NFe POST empresa: ${errMsg}`);
+        return { success: false, error: errMsg };
+      }
+
+      // Unexpected status
+      const msg = `Erro HTTP ${getRes.statusCode} ao verificar empresa no Focus NFe`;
+      this.logger.warn(msg);
+      return { success: false, error: msg };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Erro ao registrar empresa no Focus NFe';
+      this.logger.error(msg);
+      return { success: false, error: msg };
+    }
+  }
+
+  /**
    * Emite uma NF-e (Nota Fiscal Eletrônica de produto) via Focus NFe.
    * Requer NCM, CFOP e informações tributárias por item.
    * Esta implementação cobre o caso simplificado (Simples Nacional).

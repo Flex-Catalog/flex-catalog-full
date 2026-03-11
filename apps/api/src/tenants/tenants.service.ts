@@ -228,7 +228,7 @@ export class TenantsService {
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { taxId: true },
+      select: { taxId: true, name: true, fiscalConfig: true },
     });
 
     let sentToFocusNfe = false;
@@ -238,6 +238,28 @@ export class TenantsService {
       const cnpj = tenant.taxId.replace(/[.\-\/\s]/g, '');
       const ambiente = this.configService.get<string>('FOCUS_NFE_AMBIENTE') ?? 'homologacao';
       const hostname = ambiente === 'producao' ? 'api.focusnfe.com.br' : 'homologacao.focusnfe.com.br';
+      const fiscal = (tenant.fiscalConfig ?? {}) as Record<string, any>;
+
+      // Ensure empresa is registered on Focus NFe before uploading certificate
+      try {
+        await this.focusNfeEnsureEmpresa(hostname, cnpj, token, {
+          razaoSocial: fiscal.razaoSocial || tenant.name || 'Empresa',
+          inscricaoMunicipal: fiscal.inscricaoMunicipal ?? '',
+          codigoMunicipio: fiscal.codigoMunicipio ?? '',
+          regimeTributario: fiscal.regimeTributario ?? 1,
+          nomeFantasia: fiscal.nomeFantasia,
+          email: fiscal.email,
+          telefone: fiscal.telefone,
+          logradouro: fiscal.logradouro,
+          numero: fiscal.numero,
+          bairro: fiscal.bairro,
+          municipio: fiscal.municipio,
+          uf: fiscal.uf,
+          cep: fiscal.cep,
+        });
+      } catch (err: any) {
+        this.logger.warn(`Empresa não pôde ser registrada no Focus NFe: ${err.message}`);
+      }
 
       try {
         await this.focusNfeUploadCertificate(hostname, cnpj, token, fileBuffer, senha);
@@ -291,6 +313,82 @@ export class TenantsService {
       data: { documentSettings: merged as any },
     });
     return merged;
+  }
+
+  private async focusNfeEnsureEmpresa(
+    hostname: string,
+    cnpj: string,
+    token: string,
+    data: {
+      razaoSocial: string;
+      inscricaoMunicipal: string;
+      codigoMunicipio: string;
+      regimeTributario: number;
+      nomeFantasia?: string;
+      email?: string;
+      telefone?: string;
+      logradouro?: string;
+      numero?: string;
+      bairro?: string;
+      municipio?: string;
+      uf?: string;
+      cep?: string;
+    },
+  ): Promise<void> {
+    const auth = Buffer.from(`${token}:`).toString('base64');
+
+    const httpGet = (path: string): Promise<number> =>
+      new Promise((resolve, reject) => {
+        const req = https.request(
+          { hostname, path, method: 'GET', headers: { Authorization: `Basic ${auth}` }, timeout: 15000 },
+          (res) => { res.resume(); res.on('end', () => resolve(res.statusCode ?? 0)); },
+        );
+        req.on('error', reject);
+        req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+        req.end();
+      });
+
+    const httpPost = (path: string, method: string, body: object): Promise<number> =>
+      new Promise((resolve, reject) => {
+        const bodyStr = JSON.stringify(body);
+        const req = https.request(
+          {
+            hostname, path, method,
+            headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) },
+            timeout: 15000,
+          },
+          (res) => { res.resume(); res.on('end', () => resolve(res.statusCode ?? 0)); },
+        );
+        req.on('error', reject);
+        req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+        req.write(bodyStr);
+        req.end();
+      });
+
+    const empresaBody: Record<string, unknown> = {
+      nome: data.razaoSocial,
+      inscricao_municipal: data.inscricaoMunicipal,
+      codigo_municipio: data.codigoMunicipio,
+      regime_tributario: data.regimeTributario,
+      ...(data.nomeFantasia ? { nome_fantasia: data.nomeFantasia } : {}),
+      ...(data.email ? { email: data.email } : {}),
+      ...(data.telefone ? { telefone: data.telefone } : {}),
+      ...(data.logradouro ? { logradouro: data.logradouro } : {}),
+      ...(data.numero ? { numero: data.numero } : {}),
+      ...(data.bairro ? { bairro: data.bairro } : {}),
+      ...(data.municipio ? { municipio: data.municipio } : {}),
+      ...(data.uf ? { uf: data.uf } : {}),
+      ...(data.cep ? { cep: data.cep.replace(/\D/g, '') } : {}),
+    };
+
+    const getStatus = await httpGet(`/v2/empresas/${cnpj}`);
+    if (getStatus === 200) {
+      await httpPost(`/v2/empresas/${cnpj}`, 'PUT', empresaBody);
+      this.logger.log(`Empresa ${cnpj} atualizada no Focus NFe`);
+    } else if (getStatus === 404) {
+      await httpPost(`/v2/empresas`, 'POST', { cnpj, ...empresaBody });
+      this.logger.log(`Empresa ${cnpj} cadastrada no Focus NFe`);
+    }
   }
 
   private focusNfeUploadCertificate(

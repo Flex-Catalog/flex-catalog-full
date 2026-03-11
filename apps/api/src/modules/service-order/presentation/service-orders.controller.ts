@@ -402,6 +402,19 @@ export class ServiceOrdersController {
     ) {
       this.logger.log(`Emitindo NFS-e via Focus NFe para OS ${data.orderNumber}`);
 
+      // Ensure empresa is registered on Focus NFe (required before first emission — 401 otherwise)
+      const regResult = await this.focusNfeService.ensureEmpresaRegistrada({
+        token: platformToken,
+        ambiente: platformAmbiente as 'homologacao' | 'producao',
+        cnpj: tenant.taxId,
+        razaoSocial: fiscal.razaoSocial || tenant?.name || 'Empresa',
+        fiscal,
+      });
+      if (!regResult.success) {
+        this.logger.warn(`Empresa não pôde ser registrada no Focus NFe: ${regResult.error}`);
+        // Proceed anyway — maybe it was already registered; the emission will confirm
+      }
+
       // ServiceType fiscal codes override tenant defaults when set
       const itemListaServico = stFiscal.itemListaServico ?? fiscal.itemListaServico ?? '17.01';
       const aliquotaISS = stFiscal.aliquotaISS ?? fiscal.aliquotaISS ?? 5.0;
