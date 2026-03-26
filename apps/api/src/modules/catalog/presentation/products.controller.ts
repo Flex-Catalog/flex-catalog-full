@@ -23,13 +23,10 @@ import { UpdateProductUseCase, UpdateProductDto } from '../application/use-cases
 import { DeleteProductUseCase } from '../application/use-cases/delete-product/delete-product.use-case';
 import { GetProductQuery } from '../application/use-cases/get-product/get-product.use-case';
 import { ListProductsQuery } from '../application/use-cases/list-products/list-products.use-case';
+import { AdjustStockUseCase, AdjustStockDto } from '../application/use-cases/adjust-stock/adjust-stock.use-case';
+import { GetPriceHistoryQuery } from '../application/use-cases/get-price-history/get-price-history.use-case';
+import { GetStockMovementsQuery } from '../application/use-cases/get-stock-movements/get-stock-movements.use-case';
 
-/**
- * Products Controller
- * - SRP: Only handles HTTP concerns
- * - Delegation: Delegates to use cases
- * - Law of Demeter: Minimal knowledge of domain
- */
 @ApiTags('Products')
 @ApiBearerAuth()
 @Controller('products')
@@ -41,6 +38,9 @@ export class ProductsController {
     private readonly deleteProductUseCase: DeleteProductUseCase,
     private readonly getProductQuery: GetProductQuery,
     private readonly listProductsQuery: ListProductsQuery,
+    private readonly adjustStockUseCase: AdjustStockUseCase,
+    private readonly getPriceHistoryQuery: GetPriceHistoryQuery,
+    private readonly getStockMovementsQuery: GetStockMovementsQuery,
   ) {}
 
   @Get()
@@ -67,11 +67,7 @@ export class ProductsController {
       isActive: isActive ? isActive === 'true' : undefined,
       search,
     });
-
-    if (result.isFailure) {
-      throw this.mapError(result.error);
-    }
-
+    if (result.isFailure) throw this.mapError(result.error);
     return result.value;
   }
 
@@ -83,11 +79,7 @@ export class ProductsController {
       context: createContext(user.tenantId, user.id),
       productId: id,
     });
-
-    if (result.isFailure) {
-      throw this.mapError(result.error);
-    }
-
+    if (result.isFailure) throw this.mapError(result.error);
     return result.value;
   }
 
@@ -100,11 +92,7 @@ export class ProductsController {
       context: createContext(user.tenantId, user.id),
       data: dto,
     });
-
-    if (result.isFailure) {
-      throw this.mapError(result.error);
-    }
-
+    if (result.isFailure) throw this.mapError(result.error);
     return result.value;
   }
 
@@ -121,17 +109,11 @@ export class ProductsController {
       productId: id,
       data: dto,
     });
-
-    if (result.isFailure) {
-      throw this.mapError(result.error);
-    }
-
-    // Return updated product
+    if (result.isFailure) throw this.mapError(result.error);
     const getResult = await this.getProductQuery.execute({
       context: createContext(user.tenantId, user.id),
       productId: id,
     });
-
     return getResult.value;
   }
 
@@ -144,26 +126,54 @@ export class ProductsController {
       context: createContext(user.tenantId, user.id),
       productId: id,
     });
-
-    if (result.isFailure) {
-      throw this.mapError(result.error);
-    }
+    if (result.isFailure) throw this.mapError(result.error);
   }
 
-  /**
-   * Maps domain errors to HTTP exceptions
-   * - SRP: Error mapping logic
-   */
+  @Post(':id/stock/adjust')
+  @RequirePermissions('PRODUCT_WRITE')
+  @ApiOperation({ summary: 'Adjust product stock quantity' })
+  async adjustStock(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() dto: AdjustStockDto,
+  ) {
+    const result = await this.adjustStockUseCase.execute({
+      context: createContext(user.tenantId, user.id),
+      productId: id,
+      data: dto,
+    });
+    if (result.isFailure) throw this.mapError(result.error);
+    return result.value;
+  }
+
+  @Get(':id/price-history')
+  @RequirePermissions('PRODUCT_READ')
+  @ApiOperation({ summary: 'Get product price history' })
+  async getPriceHistory(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const result = await this.getPriceHistoryQuery.execute({
+      context: createContext(user.tenantId, user.id),
+      productId: id,
+    });
+    if (result.isFailure) throw this.mapError(result.error);
+    return result.value;
+  }
+
+  @Get(':id/stock-movements')
+  @RequirePermissions('PRODUCT_READ')
+  @ApiOperation({ summary: 'Get product stock movements' })
+  async getStockMovements(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    const result = await this.getStockMovementsQuery.execute({
+      context: createContext(user.tenantId, user.id),
+      productId: id,
+    });
+    if (result.isFailure) throw this.mapError(result.error);
+    return result.value;
+  }
+
   private mapError(error: Error): Error {
-    if (error instanceof ValidationError) {
-      return new BadRequestException(error.message);
-    }
-    if (error instanceof NotFoundError) {
-      return new NotFoundException(error.message);
-    }
-    if (error instanceof ConflictError) {
-      return new ConflictException(error.message);
-    }
+    if (error instanceof ValidationError) return new BadRequestException(error.message);
+    if (error instanceof NotFoundError) return new NotFoundException(error.message);
+    if (error instanceof ConflictError) return new ConflictException(error.message);
     return new BadRequestException(error.message);
   }
 }

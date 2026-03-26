@@ -26,6 +26,7 @@ import { SupportModule } from './modules/support/support.module';
 import { AffiliateModule } from './modules/affiliate/affiliate.module';
 import { ServiceTypeModule } from './modules/service-type/service-type.module';
 import { ClientModule } from './modules/client/client.module';
+import { SalesModule } from './modules/sales/sales.module';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantStatusGuard } from './common/guards/tenant-status.guard';
@@ -55,6 +56,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     ServiceOrderModule, // Service Orders + Receipts + NFS-e
     ServiceTypeModule,  // Service Types with fiscal codes
     ClientModule,       // Client/Company CNPJ book
+    SalesModule,        // Sales management + stock deduction
 
     // Supporting Modules
     BillingModule,

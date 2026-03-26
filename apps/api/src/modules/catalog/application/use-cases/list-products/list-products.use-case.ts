@@ -4,11 +4,8 @@ import { Result } from '../../../../../@core/domain/result';
 import { PaginatedResult } from '../../../../../@core/domain/repository.interface';
 import { Product } from '../../../domain/aggregates/product/product.aggregate';
 import { IProductRepository, PRODUCT_REPOSITORY, ProductQueryOptions } from '../../../domain/repositories/product.repository.interface';
-import { ProductDto } from '../get-product/get-product.use-case';
+import { ProductDto, GetProductQuery } from '../get-product/get-product.use-case';
 
-/**
- * List Products Input
- */
 export interface ListProductsInput {
   readonly context: UseCaseContext;
   readonly page?: number;
@@ -18,9 +15,6 @@ export interface ListProductsInput {
   readonly search?: string;
 }
 
-/**
- * List Products Output
- */
 export interface ListProductsOutput {
   readonly data: ProductDto[];
   readonly total: number;
@@ -29,11 +23,6 @@ export interface ListProductsOutput {
   readonly totalPages: number;
 }
 
-/**
- * List Products Query
- * - SRP: Only lists products
- * - Pure: No side effects
- */
 @Injectable()
 export class ListProductsQuery implements IQuery<ListProductsInput, ListProductsOutput> {
   constructor(
@@ -51,10 +40,7 @@ export class ListProductsQuery implements IQuery<ListProductsInput, ListProducts
     };
 
     const result = await this.productRepository.findAll(input.context.tenantId, options);
-
-    if (result.isFailure) {
-      return Result.fail(result.error);
-    }
+    if (result.isFailure) return Result.fail(result.error);
 
     const paginatedProducts = result.value;
 
@@ -73,7 +59,12 @@ export class ListProductsQuery implements IQuery<ListProductsInput, ListProducts
       name: product.name,
       sku: product.sku,
       priceCents: product.priceCents,
+      costCents: product.costCents,
       currency: product.currency,
+      stockQuantity: product.stockQuantity,
+      stockMinAlert: product.stockMinAlert,
+      marginPercent: product.marginPercent != null ? Math.round(product.marginPercent * 10) / 10 : null,
+      isLowStock: product.isLowStock,
       categoryId: product.categoryId,
       attributes: { ...product.attributes },
       fiscal: { ...product.fiscal },

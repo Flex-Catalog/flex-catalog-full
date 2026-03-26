@@ -8,6 +8,7 @@ import {
   GetInvoiceMetricsQuery,
   GetProductMetricsQuery,
   GetRecentActivityQuery,
+  GetSalesMetricsQuery,
 } from './application/queries/dashboard.queries';
 
 // Controller
@@ -28,6 +29,7 @@ import { DashboardController } from './presentation/dashboard.controller';
     GetInvoiceMetricsQuery,
     GetProductMetricsQuery,
     GetRecentActivityQuery,
+    GetSalesMetricsQuery,
   ],
   exports: [
     GetDashboardSummaryQuery,
@@ -35,6 +37,7 @@ import { DashboardController } from './presentation/dashboard.controller';
     GetInvoiceMetricsQuery,
     GetProductMetricsQuery,
     GetRecentActivityQuery,
+    GetSalesMetricsQuery,
   ],
 })
 export class AnalyticsModule {}

@@ -9,6 +9,7 @@ import {
   GetInvoiceMetricsQuery,
   GetProductMetricsQuery,
   GetRecentActivityQuery,
+  GetSalesMetricsQuery,
 } from '../application/queries/dashboard.queries';
 
 /**
@@ -26,7 +27,23 @@ export class DashboardController {
     private readonly getInvoiceMetricsQuery: GetInvoiceMetricsQuery,
     private readonly getProductMetricsQuery: GetProductMetricsQuery,
     private readonly getRecentActivityQuery: GetRecentActivityQuery,
+    private readonly getSalesMetricsQuery: GetSalesMetricsQuery,
   ) {}
+
+@Get('sales-metrics')
+  @RequirePermissions('SALE_READ')
+  @ApiOperation({ summary: 'Get sales and stock metrics for dashboard' })
+  async getSalesMetrics(@CurrentUser() user: AuthUser) {
+    const result = await this.getSalesMetricsQuery.execute({
+      context: createContext(user.tenantId, user.id),
+    });
+
+    if (result.isFailure) {
+      throw new BadRequestException(result.error.message);
+    }
+
+    return result.value;
+  }
 
   @Get()
   @RequirePermissions('PRODUCT_READ')
