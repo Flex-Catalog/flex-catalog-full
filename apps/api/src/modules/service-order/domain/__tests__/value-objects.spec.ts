@@ -1,5 +1,4 @@
 import { ServicePeriod } from '../value-objects/service-period.vo';
-import { VesselType } from '../value-objects/vessel-type.vo';
 import { ServiceType } from '../value-objects/service-type.vo';
 
 describe('ServicePeriod', () => {

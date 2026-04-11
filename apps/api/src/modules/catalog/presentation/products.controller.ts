@@ -79,8 +79,8 @@ export class ProductsController {
       priceMin: priceMin ? parseInt(priceMin, 10) * 100 : undefined, // cents
       priceMax: priceMax ? parseInt(priceMax, 10) * 100 : undefined, // cents
       inStockOnly: inStockOnly ? inStockOnly === 'true' : undefined,
-      sortBy,
-      sortDir,
+      sortBy: sortBy as 'name' | 'price' | 'createdAt' | 'stockQuantity' | undefined,
+      sortDir: sortDir as 'asc' | 'desc' | undefined,
     });
     if (result.isFailure) throw this.mapError(result.error);
     return result.value;

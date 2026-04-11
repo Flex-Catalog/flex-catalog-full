@@ -200,10 +200,8 @@ export class ServiceOrdersController {
     const order = findResult.value;
     const updateInput: UpdateServiceOrderInput = {
       endTime: dto.endTime ? new Date(dto.endTime) : undefined,
-      boatName: dto.boatName,
-      captainName: dto.captainName,
+      customerDetails: dto.customerDetails,
       employeeName: dto.employeeName,
-      transportedPeople: dto.transportedPeople,
       additionalChargesCents: dto.additionalChargesCents,
       discountCents: dto.discountCents,
       notes: dto.notes,

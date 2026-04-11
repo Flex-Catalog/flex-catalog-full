@@ -6,8 +6,7 @@ import { ServiceOrder, ServiceOrderStatus } from '../../domain/aggregates/servic
 
 export interface ServiceOrderQueryOptions extends QueryOptions {
   readonly status?: ServiceOrderStatus;
-  readonly companyName?: string;
-  readonly vesselName?: string;
+  readonly customerName?: string;
   readonly startDate?: Date;
   readonly endDate?: Date;
   readonly search?: string;
@@ -45,8 +44,7 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
     const where: any = { tenantId };
 
     if (options.status) where.status = options.status;
-    if (options.companyName) where.companyName = { contains: options.companyName, mode: 'insensitive' };
-    if (options.vesselName) where.vesselName = { contains: options.vesselName, mode: 'insensitive' };
+    if (options.customerName) where.customerName = { contains: options.customerName, mode: 'insensitive' };
 
     if (options.startDate || options.endDate) {
       where.serviceDate = {};
@@ -57,8 +55,7 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
     if (options.search) {
       where.OR = [
         { orderNumber: { contains: options.search, mode: 'insensitive' } },
-        { companyName: { contains: options.search, mode: 'insensitive' } },
-        { vesselName: { contains: options.search, mode: 'insensitive' } },
+        { customerName: { contains: options.search, mode: 'insensitive' } },
         { voucherNumber: { contains: options.search, mode: 'insensitive' } },
       ];
     }
@@ -89,10 +86,10 @@ export class PrismaServiceOrderRepository implements IServiceOrderRepository {
         status: data.status as string,
         endTime: data.endTime as any,
         servicePeriod: data.servicePeriod as any,
-        boatName: data.boatName as any,
-        captainName: data.captainName as any,
+        customerName: data.customerName as any,
+        customerTaxId: data.customerTaxId as any,
+        customerDetails: data.customerDetails as any,
         employeeName: data.employeeName as any,
-        transportedPeople: data.transportedPeople as any,
         additionalChargesCents: data.additionalChargesCents as any,
         discountCents: data.discountCents as any,
         totalCents: data.totalCents as any,

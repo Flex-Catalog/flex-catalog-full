@@ -7,7 +7,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { CurrentUser, RequirePermissions } from '../../../common/decorators';
+import { CurrentUser, RequirePermissions } from '../../common/decorators';
 
 @ApiTags('Reviews')
 @ApiBearerAuth()

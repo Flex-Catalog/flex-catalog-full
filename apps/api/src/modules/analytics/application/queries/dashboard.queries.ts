@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { IQuery, UseCaseContext } from '../../../../@core/application/use-case.interface';
 import { Result } from '../../../../@core/domain/result';
 import { PrismaService } from '../../../../prisma/prisma.service';
@@ -443,6 +443,9 @@ export class GetProductMetricsQuery
     );
   }
 }
+
+// Re-export so module/controller imports are consistent
+export { GetSalesMetricsQuery } from './get-sales-metrics.query';
 
 /**
  * Get Recent Activity Query
