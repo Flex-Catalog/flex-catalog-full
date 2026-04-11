@@ -25,6 +25,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { SupportModule } from './modules/support/support.module';
 import { AffiliateModule } from './modules/affiliate/affiliate.module';
 import { ServiceTypeModule } from './modules/service-type/service-type.module';
+import { CartModule } from './modules/cart/cart.module';
 import { ClientModule } from './modules/client/client.module';
 import { SalesModule } from './modules/sales/sales.module';
 
@@ -54,7 +55,8 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
     InvoiceModule, // Invoices + Fiscal Providers
     AnalyticsModule, // Dashboard + Reports
     ServiceOrderModule, // Service Orders + Receipts + NFS-e
-    ServiceTypeModule,  // Service Types with fiscal codes
+    ServiceTypeModule,
+    CartModule,
     ClientModule,       // Client/Company CNPJ book
     SalesModule,        // Sales management + stock deduction
 

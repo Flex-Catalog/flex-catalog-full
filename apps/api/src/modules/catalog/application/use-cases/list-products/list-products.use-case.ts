@@ -13,6 +13,11 @@ export interface ListProductsInput {
   readonly categoryId?: string;
   readonly isActive?: boolean;
   readonly search?: string;
+  readonly priceMin?: number;
+  readonly priceMax?: number;
+  readonly inStockOnly?: boolean;
+  readonly sortBy?: 'name' | 'price' | 'createdAt' | 'stockQuantity';
+  readonly sortDir?: 'asc' | 'desc';
 }
 
 export interface ListProductsOutput {

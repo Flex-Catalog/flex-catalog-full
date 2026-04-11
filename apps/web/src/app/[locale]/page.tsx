@@ -234,30 +234,31 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto items-start">
-            {/* Trial */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-3xl mx-auto items-start">
+            {/* Basic */}
             <div className="bg-white rounded-2xl p-8 border-2 border-gray-100 hover:border-gray-200 transition-all">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-green-600 uppercase tracking-wide">
-                  {t('pricing.trial.label')}
+                <span className="text-sm font-semibold text-blue-600 uppercase tracking-wide">
+                  {t('pricing.basic.label')}
                 </span>
               </div>
               <div className="mb-1">
-                <span className="text-5xl font-extrabold text-gray-900">{t('pricing.trial.price')}</span>
+                <span className="text-5xl font-extrabold text-gray-900">{t('pricing.basic.price')}</span>
+                <span className="text-lg text-gray-500">/{t('pricing.perMonth')}</span>
               </div>
-              <div className="text-sm text-gray-500 mb-8">{t('pricing.trial.period')}</div>
+              <div className="text-sm text-gray-500 mb-8">{t('pricing.basic.period')}</div>
               <ul className="space-y-3 mb-8">
-                {['feature1', 'feature2', 'feature3'].map((f) => (
+                {['feature1', 'feature2', 'feature3', 'feature4', 'feature5'].map((f) => (
                   <li key={f} className="flex items-start gap-3 text-sm text-gray-600">
                     <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                     </svg>
-                    {t(`pricing.trial.${f}`)}
+                    {t(`pricing.basic.${f}`)}
                   </li>
                 ))}
               </ul>
@@ -269,11 +270,11 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Discount — Popular */}
-            <div className="relative bg-gradient-to-b from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-2xl shadow-blue-600/30 md:-mt-4 md:mb-0">
+            {/* Pro — Popular */}
+            <div className="relative bg-gradient-to-b from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-2xl shadow-blue-600/30">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                 <span className="bg-amber-400 text-amber-900 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wide shadow-lg">
-                  {t('pricing.discount.badge')}
+                  {t('pricing.pro.badge')}
                 </span>
               </div>
               <div className="flex items-center gap-2 mb-4 mt-2">
@@ -283,63 +284,27 @@ export default function LandingPage() {
                   </svg>
                 </div>
                 <span className="text-sm font-semibold text-blue-200 uppercase tracking-wide">
-                  {t('pricing.discount.label')}
+                  {t('pricing.pro.label')}
                 </span>
               </div>
               <div className="mb-1">
-                <span className="text-5xl font-extrabold">{t('pricing.discount.price')}</span>
+                <span className="text-5xl font-extrabold">{t('pricing.pro.price')}</span>
                 <span className="text-lg text-blue-200">/{t('pricing.perMonth')}</span>
               </div>
-              <div className="text-sm text-blue-200 mb-1">{t('pricing.discount.period')}</div>
-              <div className="text-sm text-blue-300 line-through mb-8">{t('pricing.full.price')}/{t('pricing.perMonth')}</div>
+              <div className="text-sm text-blue-200 mb-8">{t('pricing.pro.period')}</div>
               <ul className="space-y-3 mb-8">
-                {['feature1', 'feature2', 'feature3'].map((f) => (
+                {['feature1', 'feature2', 'feature3', 'feature4', 'feature5', 'feature6', 'feature7', 'feature8', 'feature9'].map((f) => (
                   <li key={f} className="flex items-start gap-3 text-sm text-blue-50">
                     <svg className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                     </svg>
-                    {t(`pricing.discount.${f}`)}
+                    {t(`pricing.pro.${f}`)}
                   </li>
                 ))}
               </ul>
               <Link
                 href="/register"
                 className="block w-full py-3 text-center font-semibold text-blue-700 bg-white rounded-xl hover:bg-blue-50 transition-colors shadow-lg"
-              >
-                {t('startFree')}
-              </Link>
-            </div>
-
-            {/* Full */}
-            <div className="bg-white rounded-2xl p-8 border-2 border-gray-100 hover:border-gray-200 transition-all">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                  </svg>
-                </div>
-                <span className="text-sm font-semibold text-blue-600 uppercase tracking-wide">
-                  {t('pricing.full.label')}
-                </span>
-              </div>
-              <div className="mb-1">
-                <span className="text-5xl font-extrabold text-gray-900">{t('pricing.full.price')}</span>
-                <span className="text-lg text-gray-500">/{t('pricing.perMonth')}</span>
-              </div>
-              <div className="text-sm text-gray-500 mb-8">{t('pricing.full.period')}</div>
-              <ul className="space-y-3 mb-8">
-                {['feature1', 'feature2', 'feature3'].map((f) => (
-                  <li key={f} className="flex items-start gap-3 text-sm text-gray-600">
-                    <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                    </svg>
-                    {t(`pricing.full.${f}`)}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/register"
-                className="block w-full py-3 text-center font-semibold text-blue-600 border-2 border-blue-600 rounded-xl hover:bg-blue-50 transition-colors"
               >
                 {t('startFree')}
               </Link>

@@ -48,9 +48,14 @@ export class ProductsController {
   @ApiOperation({ summary: 'List products' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
-  @ApiQuery({ name: 'categoryId', required: false })
+@ApiQuery({ name: 'categoryId', required: false })
   @ApiQuery({ name: 'isActive', required: false })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'priceMin', required: false })
+  @ApiQuery({ name: 'priceMax', required: false })
+  @ApiQuery({ name: 'inStockOnly', required: false })
+  @ApiQuery({ name: 'sortBy', required: false })
+  @ApiQuery({ name: 'sortDir', required: false })
   async findAll(
     @CurrentUser() user: AuthUser,
     @Query('page') page?: string,
@@ -58,6 +63,11 @@ export class ProductsController {
     @Query('categoryId') categoryId?: string,
     @Query('isActive') isActive?: string,
     @Query('search') search?: string,
+    @Query('priceMin') priceMin?: string,
+    @Query('priceMax') priceMax?: string,
+    @Query('inStockOnly') inStockOnly?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortDir') sortDir?: string,
   ) {
     const result = await this.listProductsQuery.execute({
       context: createContext(user.tenantId, user.id),
@@ -66,6 +76,11 @@ export class ProductsController {
       categoryId,
       isActive: isActive ? isActive === 'true' : undefined,
       search,
+      priceMin: priceMin ? parseInt(priceMin, 10) * 100 : undefined, // cents
+      priceMax: priceMax ? parseInt(priceMax, 10) * 100 : undefined, // cents
+      inStockOnly: inStockOnly ? inStockOnly === 'true' : undefined,
+      sortBy,
+      sortDir,
     });
     if (result.isFailure) throw this.mapError(result.error);
     return result.value;

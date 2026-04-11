@@ -645,30 +645,30 @@
     "pricingSubtitle": "Start for free, pay only when you're ready. No surprises.",
     "pricing": {
       "perMonth": "month",
-      "trial": {
-        "label": "Free Trial",
-        "price": "$0",
-        "period": "For 1 month",
+      "basic": {
+        "label": "Basic",
+        "price": "$200",
+        "period": "per month",
         "feature1": "Full access to all features",
-        "feature2": "Unlimited users",
-        "feature3": "Cancel anytime"
+        "feature2": "Unlimited product catalog",
+        "feature3": "Order and customer management",
+        "feature4": "Invoice and fiscal document generation",
+        "feature5": "Chat support"
       },
-      "discount": {
+      "pro": {
         "badge": "Most Popular",
-        "label": "50% Off",
-        "price": "$250",
-        "period": "For 3 months after trial",
-        "feature1": "Everything in free plan",
+        "label": "Pro",
+        "price": "$400",
+        "period": "per month",
+        "feature1": "Everything in Basic",
         "feature2": "Priority support",
-        "feature3": "Discount coupons applicable"
-      },
-      "full": {
-        "label": "Full Plan",
-        "price": "$500",
-        "period": "After discount period",
-        "feature1": "Permanent full access",
-        "feature2": "Dedicated support",
-        "feature3": "New features included"
+        "feature3": "Technical Account Manager",
+        "feature4": "Priority bug fixes",
+        "feature5": "Best Practices sessions",
+        "feature6": "Integration and code review sessions",
+        "feature7": "On-demand releases",
+        "feature8": "Additional feature development",
+        "feature9": "Priority implementation of high-demand roadmap tasks"
       }
     },
     "couponHint": "Have a discount coupon? You can apply it during registration.",

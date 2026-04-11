@@ -27,7 +27,7 @@ export class PdfGeneratorService {
       return date.toLocaleDateString('pt-BR');
     };
 
-    const people = (data.transportedPeople as any[]) ?? [];
+    const people = ((data.customerDetails as any)?.transportedPeople ?? []) as any[];
     const peopleRows = people
       .map(
         (p: any, i: number) =>
@@ -93,21 +93,18 @@ export class PdfGeneratorService {
   <tr><td class="label">Periodo / Period</td><td class="value">${data.servicePeriodLabel}</td><td class="label">Voucher</td><td class="value">${data.voucherNumber ?? '-'}</td></tr>
 </table>
 
-<div class="section-title">Navio / Vessel</div>
+<div class="section-title">Cliente / Customer</div>
 <table>
-  <tr><td class="label">Nome do Navio / Vessel Name</td><td class="value">${data.vesselName}</td><td class="label">Tipo / Type</td><td class="value">${data.vesselTypeLabel}</td></tr>
-  <tr><td class="label">Area de Fundeio / Anchorage Area</td><td class="value" colspan="3">${data.anchorageArea ?? '-'}</td></tr>
+  <tr><td class="label">Nome do Cliente / Customer Name</td><td class="value">${data.customerName}</td><td class="label">CNPJ/CPF / Tax ID</td><td class="value">${data.customerTaxId ?? '-'}</td></tr>
 </table>
 
-<div class="section-title">Empresa / Company</div>
+<div class="section-title">Cliente / Customer</div>
 <table>
-  <tr><td class="label">Empresa / Company</td><td class="value">${data.companyName}</td><td class="label">CNPJ/Tax ID</td><td class="value">${data.companyTaxId ?? '-'}</td></tr>
   <tr><td class="label">Solicitante / Requested By</td><td class="value" colspan="3">${data.requestedBy ?? '-'}</td></tr>
 </table>
 
-<div class="section-title">Lancha e Tripulacao / Boat and Crew</div>
+<div class="section-title">Equipe / Team</div>
 <table>
-  <tr><td class="label">Lancha / Boat</td><td class="value">${data.boatName ?? '-'}</td><td class="label">Mestre / Captain</td><td class="value">${data.captainName ?? '-'}</td></tr>
   <tr><td class="label">Funcionario / Employee</td><td class="value" colspan="3">${data.employeeName ?? '-'}</td></tr>
 </table>
 

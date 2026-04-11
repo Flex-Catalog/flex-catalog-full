@@ -20,7 +20,7 @@ model Tenant {
   currentPeriodEnd     DateTime?
   trialEndsAt          DateTime?
   fiscalConfig         Json?     // { focusNfeToken, ambiente, razaoSocial, nomeFantasia, inscricaoEstadual, inscricaoMunicipal, codigoMunicipio, regimeTributario, itemListaServico, aliquotaISS, cnaeCode, logradouro, numero, complemento, bairro, municipio, uf, cep }
-  documentSettings     Json?     // { showClientTaxId, showBoatName, showPaymentTerms, showSignatureLine, showObservations, showClientAddress }
+  documentSettings     Json?     // { showClientTaxId, showCustomerDetails, showPaymentTerms, showSignatureLine, showObservations, showClientAddress }
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
@@ -63,6 +63,7 @@ model User {
   createdServiceTypes ServiceType[] @relation("ServiceTypeCreatedBy")
   updatedServiceTypes ServiceType[] @relation("ServiceTypeUpdatedBy")
   auditLogs         AuditLog[]
+  reviews           ProductReview[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -106,6 +107,7 @@ model Product {
   stockMinAlert Int?   // alerta de estoque mínimo
   attributes  Json     @default("{}")
   images      String[]
+  videos      String[]
   // NF-e fiscal codes
   ncm                      String?
   cfop                     String?
@@ -125,12 +127,33 @@ model Product {
   updatedBy      User?     @relation("ProductUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
   priceHistory   ProductPriceHistory[]
   stockMovements StockMovement[]
+  reviews        ProductReview[]
 
   @@unique([tenantId, sku])
   @@index([tenantId])
   @@index([categoryId])
   @@index([isActive])
   @@index([createdById])
+}
+
+model ProductReview {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String   @db.ObjectId
+  tenantId    String   @db.ObjectId
+  userId      String   @db.ObjectId
+  rating      Int      // 1-5
+  comment     String?
+  images      String[]
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([tenantId])
+  @@index([isApproved])
+  @@index([createdAt])
 }
 
 // ===== SALES =====
@@ -314,23 +337,16 @@ model ServiceOrder {
   startTime              DateTime
   endTime                DateTime?
 
-  // Vessel info
-  vesselName             String
-  vesselType             String   // NATIONAL, FOREIGN
-  anchorageArea          String?
+  // Customer info (generic)
+  customerName           String
+  customerTaxId          String?
+  customerDetails        Json?    // { address, phone, notes, transportedPeople?: [...] }
 
-  // Company info
-  companyName            String
-  companyTaxId           String?
-
-  // Boat/crew info
-  boatName               String?
-  captainName            String?
+  // Crew/Employee info (generic)
   employeeId             String?  @db.ObjectId
   employeeName           String?
 
-  // People transported
-  transportedPeople      Json?    // Array of { name, role, document }
+  // Service extras
   requestedBy            String?
 
   // Financial
@@ -354,8 +370,7 @@ model ServiceOrder {
   @@index([tenantId])
   @@index([orderNumber])
   @@index([status])
-  @@index([companyName])
-  @@index([vesselName])
+  @@index([customerName])
   @@index([serviceDate])
   @@index([createdAt])
 }

@@ -60,16 +60,16 @@ interface CreateServiceOrderDto {
   serviceDate: string;
   startTime: string;
   endTime?: string;
-  vesselName: string;
-  vesselType: string;
-  anchorageArea?: string;
-  companyName: string;
-  companyTaxId?: string;
-  boatName?: string;
-  captainName?: string;
+  customerName: string;
+  customerTaxId?: string;
+  customerDetails?: { 
+    address?: string; 
+    phone?: string; 
+    notes?: string; 
+    transportedPeople?: TransportedPerson[] 
+  };
   employeeId?: string;
   employeeName?: string;
-  transportedPeople?: TransportedPerson[];
   requestedBy?: string;
   voucherNumber?: string;
   rateCents: number;
@@ -117,16 +117,14 @@ export class ServiceOrdersController {
     @Query('limit') limit?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
-    @Query('companyName') companyName?: string,
-    @Query('vesselName') vesselName?: string,
+@Query('companyName') customerName?: string,
   ) {
     const options: ServiceOrderQueryOptions = {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       status: status as any,
       search,
-      companyName,
-      vesselName,
+      customerName,
     };
 
     const result = await this.repository.findAll(user.tenantId, options);
@@ -163,16 +161,11 @@ export class ServiceOrdersController {
       serviceDate: new Date(dto.serviceDate),
       startTime: new Date(dto.startTime),
       endTime: dto.endTime ? new Date(dto.endTime) : undefined,
-      vesselName: dto.vesselName,
-      vesselType: dto.vesselType,
-      anchorageArea: dto.anchorageArea,
-      companyName: dto.companyName,
-      companyTaxId: dto.companyTaxId,
-      boatName: dto.boatName,
-      captainName: dto.captainName,
+      customerName: dto.customerName,
+      customerTaxId: dto.customerTaxId,
+      customerDetails: dto.customerDetails,
       employeeId: dto.employeeId,
       employeeName: dto.employeeName,
-      transportedPeople: dto.transportedPeople,
       requestedBy: dto.requestedBy,
       voucherNumber: dto.voucherNumber,
       rateCents: dto.rateCents,

@@ -1,7 +1,6 @@
 import { AggregateRoot } from '../../../../@core/domain/aggregate-root.base';
 import { Result, ValidationError } from '../../../../@core/domain/result';
 import { ServicePeriod, ServicePeriodValue } from '../value-objects/service-period.vo';
-import { VesselType, VesselTypeValue } from '../value-objects/vessel-type.vo';
 import { ServiceType, ServiceTypeValue } from '../value-objects/service-type.vo';
 import {
   ServiceOrderCreatedEvent,
@@ -59,23 +58,12 @@ interface ServiceOrderProps {
   readonly startTime: Date;
   readonly endTime: Date | null;
 
-  // Vessel info
-  readonly vesselName: string;
-  readonly vesselType: VesselType;
-  readonly anchorageArea: string | null;
-
-  // Company info
-  readonly companyName: string;
-  readonly companyTaxId: string | null;
-
-  // Boat/launch info
-  readonly boatName: string | null;
-  readonly captainName: string | null;
+  // Customer info (generic)
+  readonly customerName: string;
+  readonly customerTaxId: string | null;
+  readonly customerDetails: { address?: string; phone?: string; notes?: string; transportedPeople?: readonly TransportedPerson[] } | null;
   readonly employeeId: string | null;
   readonly employeeName: string | null;
-
-  // People transported
-  readonly transportedPeople: readonly TransportedPerson[];
   readonly requestedBy: string | null;
 
   // Financial
@@ -102,16 +90,11 @@ export interface CreateServiceOrderInput {
   readonly serviceDate: Date;
   readonly startTime: Date;
   readonly endTime?: Date;
-  readonly vesselName: string;
-  readonly vesselType: string;
-  readonly anchorageArea?: string;
-  readonly companyName: string;
-  readonly companyTaxId?: string;
-  readonly boatName?: string;
-  readonly captainName?: string;
+  readonly customerName: string;
+  readonly customerTaxId?: string;
+  readonly customerDetails?: { address?: string; phone?: string; notes?: string; transportedPeople?: TransportedPerson[] };
   readonly employeeId?: string;
   readonly employeeName?: string;
-  readonly transportedPeople?: TransportedPerson[];
   readonly requestedBy?: string;
   readonly voucherNumber?: string;
   readonly rateCents: number;
@@ -128,10 +111,8 @@ export interface CreateServiceOrderInput {
  */
 export interface UpdateServiceOrderInput {
   readonly endTime?: Date;
-  readonly boatName?: string;
-  readonly captainName?: string;
   readonly employeeName?: string;
-  readonly transportedPeople?: TransportedPerson[];
+  readonly customerDetails?: { address?: string; phone?: string; notes?: string; transportedPeople?: TransportedPerson[] };
   readonly additionalChargesCents?: number;
   readonly discountCents?: number;
   readonly notes?: string;
@@ -166,17 +147,11 @@ export class ServiceOrder extends AggregateRoot<string> {
   get serviceDate(): Date { return this._props.serviceDate; }
   get startTime(): Date { return this._props.startTime; }
   get endTime(): Date | null { return this._props.endTime; }
-  get vesselName(): string { return this._props.vesselName; }
-  get vesselType(): VesselTypeValue { return this._props.vesselType.value; }
-  get vesselTypeLabel(): string { return this._props.vesselType.label(); }
-  get anchorageArea(): string | null { return this._props.anchorageArea; }
-  get companyName(): string { return this._props.companyName; }
-  get companyTaxId(): string | null { return this._props.companyTaxId; }
-  get boatName(): string | null { return this._props.boatName; }
-  get captainName(): string | null { return this._props.captainName; }
+  get customerName(): string { return this._props.customerName; }
+  get customerTaxId(): string | null { return this._props.customerTaxId; }
+  get customerDetails(): { address?: string; phone?: string; notes?: string; transportedPeople?: readonly TransportedPerson[] } | null { return this._props.customerDetails; }
   get employeeId(): string | null { return this._props.employeeId; }
   get employeeName(): string | null { return this._props.employeeName; }
-  get transportedPeople(): readonly TransportedPerson[] { return this._props.transportedPeople; }
   get requestedBy(): string | null { return this._props.requestedBy; }
   get rateCents(): number { return this._props.rateCents; }
   get currency(): string { return this._props.currency; }
@@ -217,16 +192,9 @@ export class ServiceOrder extends AggregateRoot<string> {
     const serviceTypeResult = ServiceType.create(input.serviceType);
     if (serviceTypeResult.isFailure) return Result.fail(serviceTypeResult.error);
 
-    // Validate vessel type
-    const vesselTypeResult = VesselType.create(input.vesselType);
-    if (vesselTypeResult.isFailure) return Result.fail(vesselTypeResult.error);
-
     // Validate required fields
-    if (!input.vesselName?.trim()) {
-      return Result.fail(new ValidationError('Vessel name is required', 'vesselName'));
-    }
-    if (!input.companyName?.trim()) {
-      return Result.fail(new ValidationError('Company name is required', 'companyName'));
+    if (!input.customerName?.trim()) {
+      return Result.fail(new ValidationError('Customer name is required', 'customerName'));
     }
     if (!input.serviceDescription?.trim()) {
       return Result.fail(new ValidationError('Service description is required', 'serviceDescription'));
@@ -260,16 +228,11 @@ export class ServiceOrder extends AggregateRoot<string> {
       serviceDate: input.serviceDate,
       startTime: input.startTime,
       endTime: input.endTime ?? null,
-      vesselName: input.vesselName.trim(),
-      vesselType: vesselTypeResult.value,
-      anchorageArea: input.anchorageArea ?? null,
-      companyName: input.companyName.trim(),
-      companyTaxId: input.companyTaxId ?? null,
-      boatName: input.boatName ?? null,
-      captainName: input.captainName ?? null,
+      customerName: input.customerName.trim(),
+      customerTaxId: input.customerTaxId ?? null,
+      customerDetails: input.customerDetails ?? null,
       employeeId: input.employeeId ?? null,
       employeeName: input.employeeName ?? null,
-      transportedPeople: Object.freeze([...(input.transportedPeople ?? [])]),
       requestedBy: input.requestedBy ?? null,
       rateCents: input.rateCents,
       currency: input.currency ?? 'BRL',
@@ -287,8 +250,8 @@ export class ServiceOrder extends AggregateRoot<string> {
         order.id,
         order.tenantId,
         order.orderNumber,
-        order.companyName,
-        order.vesselName,
+        order.customerName,
+        order.customerName,
         order.createdById,
       ),
     );
@@ -313,16 +276,11 @@ export class ServiceOrder extends AggregateRoot<string> {
         serviceDate: props.serviceDate,
         startTime: props.startTime,
         endTime: props.endTime,
-        vesselName: props.vesselName,
-        vesselType: VesselType.create(props.vesselType).value,
-        anchorageArea: props.anchorageArea,
-        companyName: props.companyName,
-        companyTaxId: props.companyTaxId,
-        boatName: props.boatName,
-        captainName: props.captainName,
+        customerName: props.customerName,
+        customerTaxId: props.customerTaxId,
+        customerDetails: props.customerDetails,
         employeeId: props.employeeId,
         employeeName: props.employeeName,
-        transportedPeople: Object.freeze([...(props.transportedPeople ?? [])]),
         requestedBy: props.requestedBy,
         rateCents: props.rateCents,
         currency: props.currency,
@@ -436,14 +394,10 @@ export class ServiceOrder extends AggregateRoot<string> {
       (newProps as any).servicePeriod = ServicePeriod.fromTimes(this._props.startTime, input.endTime);
     }
 
-    if (input.boatName !== undefined) (newProps as any).boatName = input.boatName;
-    if (input.captainName !== undefined) (newProps as any).captainName = input.captainName;
     if (input.employeeName !== undefined) (newProps as any).employeeName = input.employeeName;
+    if (input.customerDetails !== undefined) (newProps as any).customerDetails = input.customerDetails;
     if (input.notes !== undefined) (newProps as any).notes = input.notes;
 
-    if (input.transportedPeople !== undefined) {
-      (newProps as any).transportedPeople = Object.freeze([...input.transportedPeople]);
-    }
     if (input.items !== undefined) {
       (newProps as any).items = Object.freeze([...input.items]);
     }
@@ -487,16 +441,10 @@ export class ServiceOrder extends AggregateRoot<string> {
       endTime: this.endTime?.toISOString() ?? null,
       durationMinutes: this.durationMinutes,
       durationFormatted: this.durationFormatted,
-      vesselName: this.vesselName,
-      vesselType: this.vesselType,
-      vesselTypeLabel: this.vesselTypeLabel,
-      anchorageArea: this.anchorageArea,
-      companyName: this.companyName,
-      companyTaxId: this.companyTaxId,
-      boatName: this.boatName,
-      captainName: this.captainName,
+      customerName: this.customerName,
+      customerTaxId: this.customerTaxId,
+      customerDetails: this.customerDetails,
       employeeName: this.employeeName,
-      transportedPeople: [...this.transportedPeople],
       requestedBy: this.requestedBy,
       rateCents: this.rateCents,
       currency: this.currency,
@@ -526,16 +474,11 @@ export class ServiceOrder extends AggregateRoot<string> {
       serviceDate: this.serviceDate,
       startTime: this.startTime,
       endTime: this.endTime,
-      vesselName: this.vesselName,
-      vesselType: this.vesselType,
-      anchorageArea: this.anchorageArea,
-      companyName: this.companyName,
-      companyTaxId: this.companyTaxId,
-      boatName: this.boatName,
-      captainName: this.captainName,
+      customerName: this.customerName,
+      customerTaxId: this.customerTaxId,
+      customerDetails: this.customerDetails,
       employeeId: this.employeeId,
       employeeName: this.employeeName,
-      transportedPeople: [...this.transportedPeople],
       requestedBy: this.requestedBy,
       rateCents: this.rateCents,
       currency: this.currency,

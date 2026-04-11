@@ -645,30 +645,30 @@
     "pricingSubtitle": "Comienza gratis, paga solo cuando estés listo. Sin sorpresas.",
     "pricing": {
       "perMonth": "mes",
-      "trial": {
-        "label": "Prueba Gratis",
-        "price": "$0",
-        "period": "Por 1 mes",
+      "basic": {
+        "label": "Basic",
+        "price": "$200",
+        "period": "por mes",
         "feature1": "Acceso completo a todas las funcionalidades",
-        "feature2": "Usuarios ilimitados",
-        "feature3": "Cancela cuando quieras"
+        "feature2": "Catálogo de productos ilimitado",
+        "feature3": "Gestión de pedidos y clientes",
+        "feature4": "Emisión de facturas y documentos fiscales",
+        "feature5": "Soporte por chat"
       },
-      "discount": {
+      "pro": {
         "badge": "Más Popular",
-        "label": "50% de Descuento",
-        "price": "€ 235",
-        "period": "Por 3 meses después de la prueba",
-        "feature1": "Todo del plan gratuito",
+        "label": "Pro",
+        "price": "$400",
+        "period": "por mes",
+        "feature1": "Todo del plan Basic",
         "feature2": "Soporte prioritario",
-        "feature3": "Cupones de descuento aplicables"
-      },
-      "full": {
-        "label": "Plan Completo",
-        "price": "€ 470",
-        "period": "Después del período de descuento",
-        "feature1": "Acceso completo permanente",
-        "feature2": "Soporte dedicado",
-        "feature3": "Nuevas funcionalidades incluidas"
+        "feature3": "Gerente de Cuentas Técnicas",
+        "feature4": "Correcciones de bugs prioritarios",
+        "feature5": "Sesiones de Mejores Prácticas",
+        "feature6": "Sesiones de integración y revisión de código",
+        "feature7": "Lanzamientos bajo demanda",
+        "feature8": "Desarrollo de funcionalidades adicionales",
+        "feature9": "Implementación prioritaria del roadmap de alta demanda"
       }
     },
     "couponHint": "¿Tienes un cupón de descuento? Puedes aplicarlo durante el registro.",
